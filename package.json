@@ -4,7 +4,7 @@
   "description": "a Bangwords game-server",
   "main": "server.js",
   "scripts": {
-    "test": "test"
+    "test": "mocha"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
