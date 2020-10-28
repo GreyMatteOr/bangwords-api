@@ -1,13 +1,33 @@
+const symbols = '\ .,!?@#$%^&*()"\':;{}[]\\|<>/';
+
 class Game {
-    constructor(wordToGuess, maxWrongAttempts = 6) {
-        // this.alive = true;
-        this.player1;
-        this.player2;
-        this.wordToGuess = wordToGuess.toLowerCase();
+    constructor(maxWrongAttempts = 6) {
+        this.wordToGuess = '';
+        this.generatorID = null;
         this.maxWrongAttempts = maxWrongAttempts;
         this.attemptedGuesses = []; // All of these will be displayed as guesses
         this.wrongGuesses = 0;
         this.correctGuesses = []; // These will be displayed as correct guesses only
+    }
+
+    setWordToGuess(word) {
+      return this.wordToGuess = word.toLowerCase();
+    }
+
+    setGenerator(id) {
+      return this.generatorID = id;
+    }
+
+    getGuessesLeft() {
+      return this.maxWrongAttempts - this.wrongGuesses;
+    }
+
+    isOver() {
+      return this.maxWrongAttempts === this.wrongGuesses;
+    }
+
+    verifyGen(id) {
+      return this.generatorID === id;
     }
 
     reviewAttempt(guess) {
@@ -26,7 +46,7 @@ class Game {
 
     wrongAttempt(guess) {
         this.wrongGuesses += 1;
-        if (this.wrongGuesses >= this.maxWrongAttempts) {
+        if (this.isOver()) {
             return 'The man is dead';
         }
         return `'${guess}' was a bad guess.`
@@ -37,7 +57,10 @@ class Game {
         if (this.correctGuesses.slice(-1)[0] == this.wordToGuess) {
             return this.winGame();
         }
-        if (theWordSplit.every(letter => this.correctGuesses.includes(letter))) {
+        let revealedAll = theWordSplit.every(letter => {
+            return this.correctGuesses.includes(letter) || symbols.includes(letter);
+        });
+        if (revealedAll) {
             return this.winGame();
         }
     }
@@ -50,7 +73,7 @@ class Game {
       let theWordSplit = this.wordToGuess.split('');
       return theWordSplit.map(letter => {
         if(this.correctGuesses.includes(letter) ||
-         '\ .,!?@#$%^&*()"\':;{}[]\\|<>/'.includes(letter)) {
+         symbols.includes(letter)) {
           return letter;
         }
         return '_';
