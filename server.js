@@ -1,29 +1,32 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const Game = require('./Game/Game.js');
 let game = new Game, players = [], generator;
 
+app.use(express.json());
 app.set('port', process.env.PORT || 3000);
 
-app.post('/', (req, resp) => {
-  if (req.act === 'join') {
-    joinGame(req.isGenerator, resp);
+app.post('/', ({ body }, resp) => {
+  console.log(body)
+  if (body.act === 'join') {
+    joinGame(body.isGenerator, resp);
   }
-  if (req.act === 'word' && req.word &&) {
-    startGame(req, resp)
+  if (body.act === 'word') {
+    startGame(body, resp)
   }
-  if (req.act === 'guess') {
-    makeGuess(req, resp)
+  if (body.act === 'guess') {
+    makeGuess(body, resp)
   }
-  resp.status(400).json("Incorrect 'act' verb");
+  resp.status(400).json(`Incorrect 'act' verb, Received: ${body.act}`);
 })
 
-app.get('/', (req, resp) => {
+app.get('/', (body, resp) => {
   resp.send('<h3>Connected</h3>');
 })
 
-joinGame(isGenerator, resp) {
+function joinGame(isGenerator, resp) {
   if (isGenerator === 'true') {
     isGenerator = true;
   } else if (isGenerator === 'false') {
@@ -46,8 +49,8 @@ joinGame(isGenerator, resp) {
   );
 }
 
-startGame({ word, id }, resp) {
-  if (!word || !id) {
+function startGame({ word, id }, resp) {
+  if (!word) {
     return resp.status(400).json(`Word is missing. Word: ${word}.`);
   }
   if (game.verifyGen(id)) {
@@ -64,7 +67,7 @@ startGame({ word, id }, resp) {
   });
 }
 
-makeGuess({ guess, id }) {
+function makeGuess({ guess, id }, resp) {
   if (!guess) {
     return resp.status(400).json(`Guess is missing. Guess: ${guess}.`);
   }
