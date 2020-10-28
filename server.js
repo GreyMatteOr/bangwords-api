@@ -7,16 +7,16 @@ let game = new Game, players = [], generator;
 app.set('port', process.env.PORT || 3000);
 
 app.post('/', (req, resp) => {
-  if (req.act === 'join' && typeof(req.role) === 'boolean') {
-    joinGame(req.role, resp);
+  if (req.act === 'join') {
+    joinGame(req.isGenerator, resp);
   }
-  if (req.act === 'word' && req.word) {
+  if (req.act === 'word' && req.word &&) {
     startGame(req, resp)
   }
   if (req.act === 'guess') {
     makeGuess(req, resp)
   }
-  resp.status(400).json("Incorrect 'act' verb or supplementary options");
+  resp.status(400).json("Incorrect 'act' verb");
 })
 
 app.get('/', (req, resp) => {
@@ -24,6 +24,13 @@ app.get('/', (req, resp) => {
 })
 
 joinGame(isGenerator, resp) {
+  if (isGenerator === 'true') {
+    isGenerator = true;
+  } else if (isGenerator === 'false') {
+    isGenerator = false;
+  } else {
+    return resp.status(400).json(`Role needs to be \`true\` or \`false\`. Is: ${resp.isGenerator}.`);
+  }
   let id = Date.now();
   while (players.includes(id)) {
     id -= 1;
@@ -35,7 +42,16 @@ joinGame(isGenerator, resp) {
   resp.status(200).json(id);
 }
 
-startGame()
+startGame({ word, id }, resp) {
+  if (!word || !id) {
+    return resp.status(400).json(`Word or id are missing. Word: ${word}. Id: ${id}`);
+  }
+  game.setWordToGuess(word);
+  if (players.length < 2) {
+    return resp.status(200).json(`Received. Waiting on others to join...`);
+  }
+  resp.status(200).json('Received. Game starting.')
+}
 
 
 
