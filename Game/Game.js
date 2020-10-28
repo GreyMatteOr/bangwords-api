@@ -11,11 +11,19 @@ class Game {
     }
 
     setWordToGuess(word) {
-      this.wordToGuess = word.toLowerCase();
+      return this.wordToGuess = word.toLowerCase();
     }
 
     setGenerator(id) {
-      this.generatorID = id;
+      return this.generatorID = id;
+    }
+
+    getGuessesLeft() {
+      return this.maxWrongAttempts - this.wrongGuesses;
+    }
+
+    isOver() {
+      return this.maxWrongAttempts === this.wrongGuesses;
     }
 
     verifyGen(id) {
@@ -38,7 +46,7 @@ class Game {
 
     wrongAttempt(guess) {
         this.wrongGuesses += 1;
-        if (this.wrongGuesses >= this.maxWrongAttempts) {
+        if (this.isOver()) {
             return 'The man is dead';
         }
         return `'${guess}' was a bad guess.`

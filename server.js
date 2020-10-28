@@ -39,21 +39,48 @@ joinGame(isGenerator, resp) {
     game.setGenerator(id);
   }
   players.push(id);
-  resp.status(200).json(id);
+  resp.status(200).json({
+    id,
+    ready: players.length >= 2,
+    isGen: isGenerator}
+  );
 }
 
 startGame({ word, id }, resp) {
   if (!word || !id) {
-    return resp.status(400).json(`Word or id are missing. Word: ${word}. Id: ${id}`);
+    return resp.status(400).json(`Word is missing. Word: ${word}.`);
+  }
+  if (game.verifyGen(id)) {
+    return resp.status(401).json(`Not the generator. ID provided: ${id}.`);
   }
   game.setWordToGuess(word);
   if (players.length < 2) {
     return resp.status(200).json(`Received. Waiting on others to join...`);
   }
-  resp.status(200).json('Received. Game starting.')
+  resp.status(200).json({
+    display: game.displayRevealed(),
+    guesses: game.getGuessesLeft(),
+    isOver: game.isOver()
+  });
 }
 
-
+makeGuess({ guess, id }) {
+  if (!guess) {
+    return resp.status(400).json(`Guess is missing. Guess: ${guess}.`);
+  }
+  if (!game.verifyGen(id)) {
+    return resp.status(401).json(`Generator is not allowed to guess. ID provided: ${id}.`);
+  }
+  if (!players.includes(id)) {
+    return resp.status(401).json(`Only current players may guess. ID provided: ${id}.`);
+  }
+  game.reviewAttempt(guess);
+  resp.status(200).json({
+    display: game.displayRevealed(),
+    guesses: game.getGuessesLeft(),
+    isOver: game.isOver()
+  })
+}
 
 server.listen(app.get('port'), () => {
   console.log(`Listening on port ${app.get('port')}.`);
