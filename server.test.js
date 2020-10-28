@@ -131,6 +131,47 @@ describe('server', function() {
     });
   });
 
+  describe('makeGuess', function() {
+
+    it('should be able to guess letters', async function(done) {
+      const res = await request(server)
+                        .post('/')
+                        .send({
+                          "act": "guess",
+                          "guess": "d",
+                          "id": JSON.stringify(guesserID)
+                        });
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.display).toEqual(['d','_','_','_','_']);
+      expect(res.body.guesses).toEqual(6);
+      expect(res.body.isOver).toEqual(false);
+      expect(game.wordToGuess).toEqual('debug');
+      done();
+    });
+
+    it('should return an error for malformed bodies', async function(done) {
+      const badWord = await request(server)
+                        .post('/')
+                        .send({
+                          "act": "guess",
+                          "guess": "",
+                          "id": JSON.stringify(guesserID)
+                        });
+      expect(badWord.statusCode).toEqual(400);
+
+      const badid = await request(server)
+                        .post('/')
+                        .send({
+                          "act": "guess",
+                          "guess": "a",
+                          "id": JSON.stringify(genID)
+                        });
+      expect(badid.statusCode).toEqual(401);
+      expect(game.wordToGuess).toEqual('debug');
+      done();
+    });
+  });
+
   afterAll(function(done) {
     server.close(done)
   });

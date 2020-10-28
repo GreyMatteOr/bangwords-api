@@ -70,13 +70,13 @@ function setWord({ word, id }, resp) {
 }
 
 function makeGuess({ guess, id }, resp) {
-  if (!guess) {
+  if (guess.length <= 0) {
     return resp.status(400).json(`Guess is missing. Guess: ${guess}.`);
   }
-  if (!game.verifyGen(id)) {
+  if (game.verifyGen(id)) {
     return resp.status(401).json(`Generator is not allowed to guess. ID provided: ${id}.`);
   }
-  if (!players.includes(id)) {
+  if (!players.includes(+id)) {
     return resp.status(401).json(`Only current players may guess. ID provided: ${id}.`);
   }
   game.reviewAttempt(guess);
