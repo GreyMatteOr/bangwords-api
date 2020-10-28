@@ -3,9 +3,11 @@ const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const Game = require('./Game/Game.js');
+const cors = require('cors');
 let game = new Game, players = [], generator;
 
 app.use(express.json());
+app.use(cors());
 app.set('port', process.env.PORT || 3000);
 
 app.post('/', ({ body }, resp) => {
@@ -13,7 +15,7 @@ app.post('/', ({ body }, resp) => {
     joinGame(body.isGenerator, resp);
   }
   if (body.act === 'word') {
-    startGame(body, resp)
+    setWord(body, resp)
   }
   if (body.act === 'guess') {
     makeGuess(body, resp)
@@ -49,11 +51,11 @@ function joinGame(isGenerator, resp) {
   });
 }
 
-function startGame({ word, id }, resp) {
+function setWord({ word, id }, resp) {
   if (!word) {
     return resp.status(400).json(`Word is missing. Word: ${word}.`);
   }
-  if (game.verifyGen(id)) {
+  if (!game.verifyGen(id)) {
     return resp.status(401).json(`Not the generator. ID provided: ${id}.`);
   }
   game.setWordToGuess(word);
