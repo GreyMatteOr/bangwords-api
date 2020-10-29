@@ -30,7 +30,7 @@ app.get('/', (body, resp) => {
   resp.status(200).json({
     numPlayers: players.length,
     attempts: game.attemptedGuesses,
-    remainingGuesses: game.getGuessesLeft()
+    remainingGuesses: game.getGuessesLeft(),
     isOver: game.isOver(),
     display: game.displayRevealed()
   });
