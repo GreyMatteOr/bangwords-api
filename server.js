@@ -3,18 +3,19 @@ const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const Game = require('./Game/Game.js');
+const cors = require('cors');
 let game = new Game, players = [], generator;
 
 app.use(express.json());
+app.use(cors());
 app.set('port', process.env.PORT || 3000);
 
 app.post('/', ({ body }, resp) => {
-  console.log(body)
   if (body.act === 'join') {
     joinGame(body.isGenerator, resp);
   }
   if (body.act === 'word') {
-    startGame(body, resp)
+    setWord(body, resp)
   }
   if (body.act === 'guess') {
     makeGuess(body, resp)
@@ -23,7 +24,7 @@ app.post('/', ({ body }, resp) => {
 })
 
 app.get('/', (body, resp) => {
-  resp.send('<h3>Connected</h3>');
+  resp.status(200).json('<h3>Connected</h3>');
 })
 
 function joinGame(isGenerator, resp) {
@@ -44,16 +45,17 @@ function joinGame(isGenerator, resp) {
   players.push(id);
   resp.status(200).json({
     id,
-    ready: players.length >= 2,
-    isGen: isGenerator}
-  );
+    ready: players.length >= 2 && game.generatorID !== null,
+    isGen: isGenerator,
+    numPlayers: players.length
+  });
 }
 
-function startGame({ word, id }, resp) {
+function setWord({ word, id }, resp) {
   if (!word) {
     return resp.status(400).json(`Word is missing. Word: ${word}.`);
   }
-  if (game.verifyGen(id)) {
+  if (!game.verifyGen(id)) {
     return resp.status(401).json(`Not the generator. ID provided: ${id}.`);
   }
   game.setWordToGuess(word);
@@ -68,13 +70,13 @@ function startGame({ word, id }, resp) {
 }
 
 function makeGuess({ guess, id }, resp) {
-  if (!guess) {
+  if (guess.length <= 0) {
     return resp.status(400).json(`Guess is missing. Guess: ${guess}.`);
   }
-  if (!game.verifyGen(id)) {
+  if (game.verifyGen(id)) {
     return resp.status(401).json(`Generator is not allowed to guess. ID provided: ${id}.`);
   }
-  if (!players.includes(id)) {
+  if (!players.includes(+id)) {
     return resp.status(401).json(`Only current players may guess. ID provided: ${id}.`);
   }
   game.reviewAttempt(guess);
@@ -89,14 +91,4 @@ server.listen(app.get('port'), () => {
   console.log(`Listening on port ${app.get('port')}.`);
 });
 
-
-io.on('connection', (socket) => {
-  console.log('A user has connected.', io.engine.clientsCount)
-  io.sockets.emit(`User${io.engine.clientsCount} has connected`);
-  socket.on('disconnect', () => {
-    console.log('A user has disconnected.', io.engine.clientsCount)
-    io.sockets.emit(`User${io.engine.clientsCount} has disconnected`);
-  })
-})
-
-module.exports = server;
+module.exports = { server, game };

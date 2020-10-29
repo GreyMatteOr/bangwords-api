@@ -27,7 +27,7 @@ class Game {
     }
 
     verifyGen(id) {
-      return this.generatorID === id;
+      return +this.generatorID === +id;
     }
 
     reviewAttempt(guess) {
