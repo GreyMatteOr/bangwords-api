@@ -74,7 +74,8 @@ function setWord({ word, id }, resp) {
   resp.status(200).json({
     display: game.displayRevealed(),
     remainingGuesses: game.getGuessesLeft(),
-    isOver: game.isOver()
+    isOver: game.isOver(),
+    attempts: game.attemptedGuesses
   });
 }
 
@@ -92,7 +93,8 @@ function makeGuess({ guess, id }, resp) {
   resp.status(200).json({
     display: game.displayRevealed(),
     remainingGuesses: game.getGuessesLeft(),
-    isOver: game.isOver()
+    isOver: game.isOver(),
+    attempts: game.attemptedGuesses
   })
 }
 
