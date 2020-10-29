@@ -4,7 +4,7 @@ const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const Game = require('./Game/Game.js');
 const cors = require('cors');
-let game = new Game, players = [], generator;
+let game = new Game(), players = [], generator;
 
 app.use(express.json());
 app.use(cors());
@@ -19,6 +19,9 @@ app.post('/', ({ body }, resp) => {
   }
   if (body.act === 'guess') {
     makeGuess(body, resp)
+  }
+  if (body.act === 'clear') {
+    clearGame(resp)
   }
   resp.status(400).json(`Incorrect 'act' verb, Received: ${body.act}`);
 })
@@ -46,7 +49,7 @@ function joinGame(isGenerator, resp) {
   resp.status(200).json({
     id,
     ready: players.length >= 2 && game.generatorID !== null,
-    isGen: isGenerator,
+    isGenerator: isGenerator,
     numPlayers: players.length
   });
 }
@@ -85,6 +88,18 @@ function makeGuess({ guess, id }, resp) {
     guesses: game.getGuessesLeft(),
     isOver: game.isOver()
   })
+}
+
+function clearGame(resp) {
+  game.reset();
+  players = [];
+  resp.status(200).json({
+    numPlayers: players.length,
+    isGenerator: null,
+    guesses: [],
+    isOver: false,
+    display: []
+  });
 }
 
 server.listen(app.get('port'), () => {

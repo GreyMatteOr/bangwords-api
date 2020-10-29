@@ -57,7 +57,7 @@ describe('server', function() {
       guesserID = res.body.id;
       expect(res.statusCode).toEqual(200);
       expect(res.body.ready).toEqual(false);
-      expect(res.body.isGen).toEqual(false);
+      expect(res.body.isGenerator).toEqual(false);
       expect(res.body.numPlayers).toEqual(1);
       expect(game.generatorID).toBeNull();
       done();
@@ -72,7 +72,7 @@ describe('server', function() {
                         });
       genID = res.body.id;
       expect(res.body.ready).toEqual(true);
-      expect(res.body.isGen).toEqual(true);
+      expect(res.body.isGenerator).toEqual(true);
       expect(res.body.numPlayers).toEqual(2);
       expect(game.generatorID).toBeTruthy();
       done();
@@ -168,6 +168,26 @@ describe('server', function() {
                         });
       expect(badid.statusCode).toEqual(401);
       expect(game.wordToGuess).toEqual('debug');
+      done();
+    });
+  });
+
+  describe('clear', function() {
+
+    it('should be able to reset the game', async function(done) {
+      const res = await request(server)
+                        .post('/')
+                        .send({
+                          "act": "clear"
+                        });
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toEqual({
+        numPlayers: 0,
+        isGenerator: null,
+        guesses: [],
+        isOver: false,
+        display: []
+      });
       done();
     });
   });
