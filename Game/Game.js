@@ -6,6 +6,7 @@ class Game {
         this.generatorID = null;
         this.maxWrongAttempts = maxWrongAttempts;
         this.attemptedGuesses = []; // All of these will be displayed as guesses
+        this.count = 0;
         this.wrongGuesses = 0;
         this.correctGuesses = []; // These will be displayed as correct guesses only
     }
@@ -36,6 +37,7 @@ class Game {
       this.attemptedGuesses = [];
       this.wrongGuesses = 0;
       this.correctGuesses = [];
+      this.count++;
     }
 
     reviewAttempt(guess) {

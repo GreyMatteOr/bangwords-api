@@ -8,7 +8,42 @@ let game = new Game(), players = [], generator;
 
 app.use(express.json());
 app.use(cors());
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 3001);
+
+io.on( "connect", ( socket ) => {
+
+  socket.on( 'joinGame', ( isGenerator ) => {
+    console.log('goo');
+    if (isGenerator) {
+      game.setGenerator(socket.id);
+    }
+    players.push(socket.id);
+    socket.emit('gameJoined', {
+      display: game.displayRevealed(),
+      isGenerator: isGenerator,
+      numPlayers: players.length,
+      guesses: game.attemptedGuesses,
+      isOver: game.isOver(),
+      remainingGuesses: game.getGuessesLeft(),
+      isOver: game.isOver(),
+      attempts: game.attemptedGuesses
+    })
+  })
+
+  socket.on( 'setWord', ( word ) => {
+    game.reset();
+    game.setWordToGuess(word);
+    socket.emit('newWordToGuess', {
+      display: game.displayRevealed(),
+      numPlayers: players.length,
+      guesses: game.attemptedGuesses,
+      isOver: game.isOver(),
+      remainingGuesses: game.getGuessesLeft(),
+      isOver: game.isOver(),
+      attempts: game.attemptedGuesses
+    })
+  })
+});
 
 app.post('/', ({ body }, resp) => {
   if (body.act === 'join') {
@@ -32,7 +67,8 @@ app.get('/', (body, resp) => {
     attempts: game.attemptedGuesses,
     remainingGuesses: game.getGuessesLeft(),
     isOver: game.isOver(),
-    display: game.displayRevealed()
+    display: game.displayRevealed(),
+    ready: players.length >= 2 && game.generatorID !== null && game.wordToGuess !== ''
   });
 })
 
