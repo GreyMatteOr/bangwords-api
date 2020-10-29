@@ -30,6 +30,14 @@ class Game {
       return +this.generatorID === +id;
     }
 
+    reset() {
+      this.wordToGuess = '';
+      this.generatorID = null;
+      this.attemptedGuesses = [];
+      this.wrongGuesses = 0;
+      this.correctGuesses = [];
+    }
+
     reviewAttempt(guess) {
         guess = guess.toLowerCase();
         if (this.attemptedGuesses.includes(guess)) {
@@ -47,6 +55,7 @@ class Game {
     wrongAttempt(guess) {
         this.wrongGuesses += 1;
         if (this.isOver()) {
+            this.reset();
             return 'The man is dead';
         }
         return `'${guess}' was a bad guess.`
@@ -66,18 +75,19 @@ class Game {
     }
 
     winGame() {
+        this.reset();
         return 'The man is alive';
     }
 
     displayRevealed() {
-      let theWordSplit = this.wordToGuess.split('');
-      return theWordSplit.map(letter => {
-        if(this.correctGuesses.includes(letter) ||
-         symbols.includes(letter)) {
-          return letter;
-        }
-        return '_';
-      })
+        let theWordSplit = this.wordToGuess.split('');
+          return theWordSplit.map(letter => {
+            if(this.correctGuesses.includes(letter) ||
+                symbols.includes(letter)) {
+                return letter;
+            }
+            return '_';
+        })
     }
 }
 
