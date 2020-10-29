@@ -27,7 +27,13 @@ app.post('/', ({ body }, resp) => {
 })
 
 app.get('/', (body, resp) => {
-  resp.status(200).json('<h3>Connected</h3>');
+  resp.status(200).json({
+    numPlayers: players.length,
+    attempts: game.attemptedGuesses,
+    remainingGuesses: game.getGuessesLeft()
+    isOver: game.isOver(),
+    display: game.displayRevealed()
+  });
 })
 
 function joinGame(isGenerator, resp) {
@@ -67,7 +73,7 @@ function setWord({ word, id }, resp) {
   }
   resp.status(200).json({
     display: game.displayRevealed(),
-    guesses: game.getGuessesLeft(),
+    remainingGuesses: game.getGuessesLeft(),
     isOver: game.isOver()
   });
 }
@@ -85,7 +91,7 @@ function makeGuess({ guess, id }, resp) {
   game.reviewAttempt(guess);
   resp.status(200).json({
     display: game.displayRevealed(),
-    guesses: game.getGuessesLeft(),
+    remainingGuesses: game.getGuessesLeft(),
     isOver: game.isOver()
   })
 }
@@ -96,7 +102,7 @@ function clearGame(resp) {
   resp.status(200).json({
     numPlayers: players.length,
     isGenerator: null,
-    guesses: [],
+    attempts: [],
     isOver: false,
     display: []
   });
