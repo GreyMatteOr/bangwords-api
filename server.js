@@ -54,7 +54,7 @@ function joinGame(isGenerator, resp) {
   players.push(id);
   resp.status(200).json({
     id,
-    ready: players.length >= 2 && game.generatorID !== null,
+    ready: players.length >= 2 && game.generatorID !== null && game.wordToGuess !== '',
     isGenerator: isGenerator,
     numPlayers: players.length
   });
@@ -71,12 +71,14 @@ function setWord({ word, id }, resp) {
   if (players.length < 2) {
     return resp.status(200).json(`Received. Waiting on others to join...`);
   }
-  resp.status(200).json({
-    display: game.displayRevealed(),
-    remainingGuesses: game.getGuessesLeft(),
-    isOver: game.isOver(),
-    attempts: game.attemptedGuesses
-  });
+  resp.status(200).json(
+    {
+      display: game.displayRevealed(),
+      remainingGuesses: game.getGuessesLeft(),
+      isOver: game.isOver(),
+      attempts: game.attemptedGuesses
+    }
+  );
 }
 
 function makeGuess({ guess, id }, resp) {
