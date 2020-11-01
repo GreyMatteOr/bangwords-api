@@ -4,6 +4,11 @@ const expect = chai.expect;
 let Game = require("./Game");
 
 describe('Game', () => {
+  let a;
+  beforeEach(() => {
+    a = new Game(3);
+    a.setWordToGuess('game')
+  })
 
   describe('Basic Functionality', () => {
 
@@ -12,44 +17,28 @@ describe('Game', () => {
     });
 
     it('2. should be an instance of Game', function() {
-      const a = new Game(3);
       expect(a).to.be.an.instanceof(Game);
     });
   })
 
   describe('Properties', () => {
     it("3. should have a word to guess", () => {
-
-      const a = new Game(3);
-
-      expect(a.wordToGuess).to.equal('');
+      expect(a.wordToGuess).to.equal('game');
     })
 
     it("4. should have a `maxWrongAttempts` property", () => {
-
-      const a = new Game(3);
-
       expect(a.maxWrongAttempts).to.equal(3);
     })
 
     it("5. attemptedGuesses should start as an empty array", () => {
-
-      const a = new Game(3);
-
       expect(a.attemptedGuesses).to.deep.equal([]);
     })
 
     it("6. wrongGuesses should start at 0", () => {
-
-      const a = new Game(3);
-
       expect(a.wrongGuesses).to.equal(0);
     })
 
     it("7. correctGuesses should start as an empty array", () => {
-
-      const a = new Game(3);
-
       expect(a.correctGuesses).to.deep.equal([]);
     })
   })
@@ -59,8 +48,6 @@ describe('Game', () => {
     describe('reviewAttempt() method (this.wrongGuesses)', () => {
       it("8a. a wrong guess should increase `this.wrongGuesses`", () => {
 
-        const a = new Game(3);
-
         a.reviewAttempt('C');
         a.reviewAttempt('d');
 
@@ -68,8 +55,6 @@ describe('Game', () => {
       })
 
       it("8b. a guess that has already occured should not affect `this.wrongGuesses`", () => {
-        const a = new Game(3);
-        a.setWordToGuess('game')
 
         a.reviewAttempt('g');
         a.reviewAttempt('G');
@@ -84,20 +69,13 @@ describe('Game', () => {
 
       it("8c. when enough wrong guesses happen, game should end in a Loss", () => {
 
-        const a = new Game(3);
-        a.setWordToGuess('game')
-
         expect(a.reviewAttempt('z')).to.equal('\'z\' was a bad guess.');
         expect(a.reviewAttempt('y')).to.equal('\'y\' was a bad guess.');
         expect(a.reviewAttempt('x')).to.equal('The man is dead');
-
       })
 
 
       it("9a. a correct guess should not increase `this.wrongGuesses`", () => {
-
-        const a = new Game(3);
-        a.setWordToGuess('game')
 
         a.reviewAttempt('g');
 
@@ -109,18 +87,12 @@ describe('Game', () => {
     describe('reviewAttempt() method (this.correctGuesses)', () => {
       it("10. a bad guess should not increase the length of `this.correctGuesses`", () => {
 
-        const a = new Game(3);
-        a.setWordToGuess('game')
-
         a.reviewAttempt('c');
 
         expect(a.correctGuesses.length).to.equal(0);
       })
 
       it("11. a correct guess should increase the length of `this.correctGuesses`", () => {
-
-        const a = new Game(3);
-        a.setWordToGuess('game')
 
         a.reviewAttempt('g');
 
@@ -129,9 +101,6 @@ describe('Game', () => {
 
       it("12. a correct guess should be the last index of `this.correctGuesses`", () => {
 
-        const a = new Game(3);
-        a.setWordToGuess('game')
-
         a.reviewAttempt('e');
         a.reviewAttempt('g');
 
@@ -139,9 +108,6 @@ describe('Game', () => {
       })
 
       it("13. when all letters have been guessed, it should end in a win", () => {
-
-        const a = new Game(3);
-        a.setWordToGuess('game')
 
         a.reviewAttempt('a');
         a.reviewAttempt('e');
@@ -154,14 +120,12 @@ describe('Game', () => {
     describe('displayRevealed() method (this.correctGuesses)', () => {
 
       it('14. to start, it should return one `_` per letter', () => {
-        const a = new Game(3);
-        a.setWordToGuess('game')
 
         expect(a.displayRevealed()).to.deep.equal(['_', '_', '_', '_']);
       })
 
       it('14. for each correct guess, it include those letters', () => {
-        const a = new Game(3);
+
         a.setWordToGuess('game guru')
 
         expect(a.displayRevealed()).to.deep.equal(
@@ -193,5 +157,56 @@ describe('Game', () => {
 
       })
     })
-  })
-})
+
+    describe('setWordToGuess', () => {
+
+      it('should set the word to guess', () => {
+        expect(a.wordToGuess).to.equal('game')
+      });
+
+      it('should convert the word toLowerCase', () => {
+
+        a.setWordToGuess('GaME!')
+
+        expect(a.wordToGuess).to.equal('game!')
+      })
+    });
+
+    describe('setGenerator', () => {
+
+      it('should set the id of who is the current generator', () => {
+
+        a.setGenerator(123);
+
+        expect(a.generatorID).to.equal(123);
+      });
+    });
+
+    describe('verifyGen', () => {
+
+      it('should return `true` if id matches. Else, `false`', () => {
+
+        a.setGenerator(123);
+
+        expect(a.verifyGen(123)).to.equal(true);
+        expect(a.verifyGen(12)).to.equal(false);
+      });
+    });
+
+    describe('getGuessesLeft', () => {
+
+      it('should give back the correct wrong guesses a player can make', () => {
+
+        expect(a.getGuessesLeft()).to.equal(3);
+
+        a.reviewAttempt('a');
+
+        expect(a.getGuessesLeft()).to.equal(3);
+
+        a.reviewAttempt('b');
+
+        expect(a.getGuessesLeft()).to.equal(2);
+      });
+    });
+  });
+});
