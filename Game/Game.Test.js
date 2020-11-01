@@ -71,7 +71,10 @@ describe('Game', () => {
 
         expect(a.reviewAttempt('z')).to.equal('\'z\' was a bad guess.');
         expect(a.reviewAttempt('y')).to.equal('\'y\' was a bad guess.');
-        expect(a.reviewAttempt('x')).to.equal('The man is dead');
+        expect(a.reviewAttempt('x')).to.equal('\'x\' was a bad guess.');
+
+        expect(a.isOver()).to.equal(true);
+        expect(a.checkGameWon()).to.equal(false);
       })
 
 
@@ -113,7 +116,7 @@ describe('Game', () => {
         a.reviewAttempt('e');
         a.reviewAttempt('g');
 
-        expect(a.reviewAttempt('m')).to.equal('The man is alive');
+        expect(a.reviewAttempt('m')).to.equal(true);
       })
     })
 
@@ -153,7 +156,7 @@ describe('Game', () => {
         );
 
         a.reviewAttempt('m');
-        expect(a.reviewAttempt('r')).to.equal('The man is alive');
+        expect(a.reviewAttempt('r')).to.equal(true);
 
       })
     })
@@ -206,6 +209,33 @@ describe('Game', () => {
         a.reviewAttempt('b');
 
         expect(a.getGuessesLeft()).to.equal(2);
+      });
+    });
+
+    describe('isOver', () => {
+
+      it('should return `true` if someone lost', () => {
+
+        a.reviewAttempt('b');
+        a.reviewAttempt('c');
+        a.reviewAttempt('d');
+
+        expect(a.isOver()).to.equal(true);
+      });
+
+      it('should return `true` if someone won', () => {
+
+        a.reviewAttempt('a');
+        a.reviewAttempt('e');
+        a.reviewAttempt('g');
+        a.reviewAttempt('m');
+
+        expect(a.isOver()).to.equal(true);
+      });
+
+      it('should return `false` otherwise', () => {
+
+        expect(a.isOver()).to.equal(false);
       });
     });
   });

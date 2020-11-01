@@ -24,7 +24,7 @@ class Game {
   }
 
   isOver() {
-    return this.maxWrongAttempts === this.wrongGuesses;
+    return this.maxWrongAttempts === this.wrongGuesses || this.checkGameWon();
   }
 
   verifyGen(id) {
@@ -47,38 +47,26 @@ class Game {
     }
     this.attemptedGuesses.push(guess);
     if (this.wordToGuess != guess && !this.wordToGuess.includes(guess)) {
-      return this.wrongAttempt(guess);
+      this.wrongGuesses += 1;
+      return `'${guess}' was a bad guess.`
     } else {
       this.correctGuesses.push(guess);
-      return this.correctAttempt();
+      return this.checkGameWon();
     }
   }
 
-  wrongAttempt(guess) {
-    this.wrongGuesses += 1;
-    if (this.isOver()) {
-      this.reset();
-      return 'The man is dead';
-    }
-    return `'${guess}' was a bad guess.`
-  }
-
-  correctAttempt() {
+  checkGameWon() {
     let theWordSplit = this.wordToGuess.split('');
     if (this.correctGuesses.slice(-1)[0] == this.wordToGuess) {
-      return this.winGame();
+      return true;
     }
     let revealedAll = theWordSplit.every(letter => {
       return this.correctGuesses.includes(letter) || symbols.includes(letter);
     });
     if (revealedAll) {
-      return this.winGame();
+      return true;
     }
-  }
-
-  winGame() {
-    this.reset();
-    return 'The man is alive';
+    return false;
   }
 
   displayRevealed() {
