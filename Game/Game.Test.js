@@ -238,5 +238,20 @@ describe('Game', () => {
         expect(a.isOver()).to.equal(false);
       });
     });
+
+    describe('reset', () => {
+
+      it('should reset the game', () => {
+
+        a.reset();
+
+        expect(a.wordToGuess).to.equal('');
+        expect(a.generatorID).to.equal(null);
+        expect(a.attemptedGuesses).to.deep.equal([]);
+        expect(a.wrongGuesses).to.equal(0);
+        expect(a.correctGuesses).to.deep.equal([]);
+        expect(a.count).to.equal(1);
+      });
+    });
   });
 });
