@@ -11,6 +11,7 @@ app.use(cors());
 app.set('port', process.env.PORT || 3001);
 
 io.on( "connect", ( socket ) => {
+  console.log(`${socket.id.slice(0, -8)} connected.`)
 
   socket.on( 'joinGame', ( isGenerator ) => {
     if (isGenerator) {
@@ -30,10 +31,15 @@ io.on( "connect", ( socket ) => {
     game.reviewAttempt(guess);
     io.emit('result', getStateData())
   })
-});
 
-io.on( "disconnect", ( socket ) => {
-  players = players.filter( player = player !== socket.id );
+  socket.on( 'forfeit', () => {
+    game.reset();
+    io.emit('result', getStateData())
+  })
+
+  socket.on( "disconnect", () => {
+    players = players.filter( player => player !== socket.id );
+  });
 });
 
 function isGameReady() {
@@ -44,9 +50,11 @@ function getStateData() {
   return {
     display: game.displayRevealed(),
     isOver: game.isOver(),
+    isWon: game.checkGameWon(),
     remainingGuesses: game.getGuessesLeft(),
     attempts: game.attemptedGuesses,
-    isGameReady: isGameReady()
+    isGameReady: isGameReady(),
+    hasGenerator: game.generatorID !== null
   }
 }
 
