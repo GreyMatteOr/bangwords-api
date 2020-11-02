@@ -13,6 +13,7 @@ app.set('port', process.env.PORT || 3001);
 
 io.on( "connect", ( socket ) => {
   console.log(`${socket.id.slice(0, -8)} connected.`)
+  players[socket.id] = null;
 
   socket.on( 'createRoom', ( id ) => {
     if (!rooms[id]) {
@@ -70,9 +71,14 @@ io.on( "connect", ( socket ) => {
     if (roomID) {
       cleanData(roomID, socket)
     }
+    io.emit('result', {rooms: Object.keys(rooms), numOnline: players.length});
   });
 
-  let state = {isLoading: false, rooms: Object.keys(rooms)}
+  let state = {
+    isLoading: false,
+    rooms: Object.keys(rooms),
+    numOnline: players.length
+  }
   io.to(socket.id).emit('result', state)
 });
 

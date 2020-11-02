@@ -22,13 +22,14 @@ class Room {
   getStateData() {
     let game = this.game;
     return {
+      attempts: game.attemptedGuesses,
       display: game.displayRevealed(),
+      hasGenerator: game.generatorID !== null,
+      isGameReady: this.isGameReady(),
       isOver: game.isOver(),
       isWon: game.checkGameWon(),
-      remainingGuesses: game.getGuessesLeft(),
-      attempts: game.attemptedGuesses,
-      isGameReady: this.isGameReady(),
-      hasGenerator: game.generatorID !== null
+      playerNames: Object.values(this.players).map(player => player.name),
+      remainingGuesses: game.getGuessesLeft()
     }
   }
 
