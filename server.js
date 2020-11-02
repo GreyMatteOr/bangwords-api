@@ -17,7 +17,8 @@ io.on( "connect", ( socket ) => {
   socket.on( 'createRoom', ( id ) => {
     if (!rooms[id]) {
       rooms[id] = new Room(id);
-      io.to(socket.id).emit( 'joinRoom', id )
+      io.emit('result', {rooms: Object.keys(rooms)});
+      io.in(id).emit('result', joinRoom(socket, id));
     } else {
       io.to(socket.id).emit('result', {errorMSG: `A room with the name '${id}' already exists! Choose again`});
     }
@@ -25,11 +26,9 @@ io.on( "connect", ( socket ) => {
 
   socket.on( 'joinRoom', ( id ) => {
     if (rooms[id]) {
-      socket.join(id);
-      players[socket.id] = id;
-      io.to(id).emit('result', rooms[id].getStateData())
+      io.in(id).emit('result', joinRoom(socket, id));
     } else {
-      io.to(socket.id).emit('result', {errorMSG: 'Room does not exist.'});
+      io.to(socket.id).emit('result', {errorMSG: `Room with name ${id} does not exist.`});
     }
   });
 
@@ -40,7 +39,7 @@ io.on( "connect", ( socket ) => {
       room.game.setGenerator(socket.id);
     }
     room.addPlayer(socket.id);
-    io.to(roomID).emit('result', room.getStateData())
+    io.in(roomID).emit('result', room.getStateData())
   })
 
   socket.on( 'setWord', ( word ) => {
@@ -48,33 +47,44 @@ io.on( "connect", ( socket ) => {
     let room = rooms[roomID];
     room.game.reset();
     room.game.setWordToGuess(word);
-    io.to(roomID).emit('result', getStateData())
+    io.in(roomID).emit('result', room.getStateData())
   })
 
   socket.on( 'makeGuess', ( guess ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
     room.game.reviewAttempt(guess);
-    io.to(roomID).emit('result', getStateData())
+    io.in(roomID).emit('result', room.getStateData())
   })
 
   socket.on( 'forfeit', () => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
     room.game.reset();
-    io.to(roomID).emit('result', getStateData());
+    io.in(roomID).emit('result', room.getStateData());
   })
 
   socket.on( "disconnect", () => {
+    console.log(`${socket.id.slice(0, -8)} disconnected.`)
     let roomID = players[socket.id];
-    let room = rooms[roomID];
-    room.deletePlayer(socket.id);
-    delete players[socket.id];
-    if (room.players.getPlayerCount() <= 0) {
-      delete rooms[roomID];
+    if (roomID) {
+      cleanData(roomID, socket)
     }
   });
+
+  let state = {isLoading: false, rooms: Object.keys(rooms)}
+  io.to(socket.id).emit('result', state)
 });
+
+function cleanData(roomID, socket) {
+  socket.leave(roomID);
+  let room = rooms[roomID];
+  room.deletePlayer(socket.id);
+  delete players[socket.id];
+  if (room.getPlayerCount() <= 0) {
+    delete rooms[roomID];
+  }
+}
 
 function clearGame(resp) {
   game.reset();
@@ -86,6 +96,14 @@ function clearGame(resp) {
     isOver: false,
     display: []
   });
+}
+
+function joinRoom(socket, roomID) {
+  socket.join(roomID);
+  players[socket.id] = roomID;
+  let state = rooms[roomID].getStateData();
+  state["inGame"] = true;
+  return state;
 }
 
 server.listen(app.get('port'), () => {

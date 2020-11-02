@@ -4,7 +4,7 @@ class Room {
   constructor( id ) {
     this.id = id;
     this.players = {};
-    game = new Game();
+    this.game = new Game();
   }
 
   addPlayer( id, name ) {
@@ -27,7 +27,7 @@ class Room {
       isWon: game.checkGameWon(),
       remainingGuesses: game.getGuessesLeft(),
       attempts: game.attemptedGuesses,
-      isGameReady: isGameReady(),
+      isGameReady: this.isGameReady(),
       hasGenerator: game.generatorID !== null
     }
   }
@@ -42,5 +42,5 @@ class Room {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = Game;
+  module.exports = Room;
 };
