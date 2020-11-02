@@ -33,13 +33,13 @@ io.on( "connect", ( socket ) => {
     }
   });
 
-  socket.on( 'setRole', ( isGenerator ) => {
+  socket.on( 'setRole', ( isGenerator, userName ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
     if (isGenerator) {
       room.game.setGenerator(socket.id);
     }
-    room.addPlayer(socket.id);
+    room.addPlayer(socket.id, userName);
     io.in(roomID).emit('result', room.getStateData())
   })
 
@@ -69,8 +69,10 @@ io.on( "connect", ( socket ) => {
     console.log(`${socket.id.slice(0, -8)} disconnected.`)
     let roomID = players[socket.id];
     delete players[socket.id];
-    if (roomID) {
-      cleanData(roomID, socket)
+    socket.leave(roomID);
+    let room = rooms[roomID];
+    if (roomID && room) {
+      removePlayerData(room, roomID, socket)
     }
     io.emit('result', {
       rooms: Object.keys(rooms),
@@ -85,9 +87,7 @@ io.on( "connect", ( socket ) => {
   })
 });
 
-function cleanData(roomID, socket) {
-  socket.leave(roomID);
-  let room = rooms[roomID];
+function removePlayerData(room, roomID, socket) {
   room.deletePlayer(socket.id);
   if (room.getPlayerCount() <= 0) {
     delete rooms[roomID];
