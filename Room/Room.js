@@ -8,7 +8,7 @@ class Room {
   }
 
   addPlayer( id, name ) {
-    this.players[id] = {name, score: 0}
+    this.players[id] = {name, score: 0};
   }
 
   deletePlayer( id ) {
@@ -16,7 +16,7 @@ class Room {
   }
 
   validate ( id ) {
-    return Object.keys(this.players).includes(id)
+    return Object.keys(this.players).includes(id);
   }
 
   getStateData() {
@@ -30,6 +30,14 @@ class Room {
       isGameReady: isGameReady(),
       hasGenerator: game.generatorID !== null
     }
+  }
+
+  getPlayerCount() {
+    return Object.keys(this.players).length;
+  }
+
+  isGameReady() {
+    return this.getPlayerCount() >= 2 && !this.game.isOver() && this.game.wordToGuess !== '';
   }
 }
 

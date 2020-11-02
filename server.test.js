@@ -1,5 +1,5 @@
 let io = require('socket.io-client');
-let { server, game } = require('./server.js');
+let { server, rooms } = require('./server.js');
 let request = require('supertest');
 let Game = require('./Game/Game.js');
 
@@ -62,7 +62,7 @@ describe('server', function() {
         isGameReady: false
       })
       done();
-    }, 80)
+    }, 400)
   });
 
   it('should be able to make a guess', async (done) => {
