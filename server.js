@@ -68,25 +68,27 @@ io.on( "connect", ( socket ) => {
   socket.on( "disconnect", () => {
     console.log(`${socket.id.slice(0, -8)} disconnected.`)
     let roomID = players[socket.id];
+    delete players[socket.id];
     if (roomID) {
       cleanData(roomID, socket)
     }
-    io.emit('result', {rooms: Object.keys(rooms), numOnline: players.length});
+    io.emit('result', {
+      rooms: Object.keys(rooms),
+      numOnline: Object.keys(players).length
+    });
   });
 
-  let state = {
-    isLoading: false,
+  io.emit('result', { numOnline: Object.keys(players).length })
+  io.to(socket.id).emit('result', {
     rooms: Object.keys(rooms),
-    numOnline: players.length
-  }
-  io.to(socket.id).emit('result', state)
+    isLoading: false
+  })
 });
 
 function cleanData(roomID, socket) {
   socket.leave(roomID);
   let room = rooms[roomID];
   room.deletePlayer(socket.id);
-  delete players[socket.id];
   if (room.getPlayerCount() <= 0) {
     delete rooms[roomID];
   }
