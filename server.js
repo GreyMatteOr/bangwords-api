@@ -92,6 +92,7 @@ function removePlayerData(room, roomID, socket) {
   if (room.getPlayerCount() <= 0) {
     delete rooms[roomID];
   }
+  io.in(roomID).emit('result', room.getStateData());
 }
 
 function clearGame(resp) {
