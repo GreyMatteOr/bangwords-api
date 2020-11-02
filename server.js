@@ -3,8 +3,9 @@ const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const Game = require('./Game/Game.js');
+const Room = require('./Room/Room.js');
 const cors = require('cors');
-let game = new Game(), players = [], generator;
+let rooms = {}, players = {}, generator;
 
 app.use(express.json());
 app.use(cors());
@@ -12,6 +13,25 @@ app.set('port', process.env.PORT || 3001);
 
 io.on( "connect", ( socket ) => {
   console.log(`${socket.id.slice(0, -8)} connected.`)
+
+  socket.on( 'createRoom', ( id ) => {
+    if (!room[id]) {
+      room[id] = new Room(id);
+      io.to(socket.id).emit( 'joinRoom', id )
+    } else {
+      io.to(socket.id).emit('result', {errorMSG: `A room with the name '${id}' already exists! Choose again`});
+    }
+  })
+
+  socket.on( 'joinRoom', ( id ) => {
+    if (room[id]) {
+      room[id].addPlayer(socket.id);
+      players[socket.id].roomID = id;
+      io.to(socket.id).emit('result', room.getStateData())
+    } else {
+      io.to(socket.id).emit('result', {errorMSG: 'Room does not exist.'});
+    }
+  });
 
   socket.on( 'joinGame', ( isGenerator ) => {
     if (isGenerator) {
@@ -34,28 +54,16 @@ io.on( "connect", ( socket ) => {
 
   socket.on( 'forfeit', () => {
     game.reset();
-    io.emit('result', getStateData())
+    io.emit('result', getStateData());
   })
 
   socket.on( "disconnect", () => {
-    players = players.filter( player => player !== socket.id );
+    delete players[socket.id];
   });
 });
 
 function isGameReady() {
   return players.length >= 2 && !game.isOver() && game.wordToGuess !== '';
-}
-
-function getStateData() {
-  return {
-    display: game.displayRevealed(),
-    isOver: game.isOver(),
-    isWon: game.checkGameWon(),
-    remainingGuesses: game.getGuessesLeft(),
-    attempts: game.attemptedGuesses,
-    isGameReady: isGameReady(),
-    hasGenerator: game.generatorID !== null
-  }
 }
 
 function clearGame(resp) {
