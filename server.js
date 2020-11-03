@@ -33,6 +33,11 @@ io.on( "connect", ( socket ) => {
     }
   });
 
+  socket.on( 'leaveRoom', () => {
+    leaveRoom(socket);
+    io.to(socket.id).emit('result', {inGame: false, isGenerator: null});
+  })
+
   socket.on( 'setRole', ( isGenerator, userName ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
@@ -46,7 +51,7 @@ io.on( "connect", ( socket ) => {
   socket.on( 'setWord', ( word ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
-    room.game.reset();
+    room.game.reset(socket.id);
     room.game.setWordToGuess(word);
     io.in(roomID).emit('result', room.getStateData())
   })
@@ -67,17 +72,7 @@ io.on( "connect", ( socket ) => {
 
   socket.on( "disconnect", () => {
     console.log(`${socket.id.slice(0, -8)} disconnected.`)
-    let roomID = players[socket.id];
-    delete players[socket.id];
-    socket.leave(roomID);
-    let room = rooms[roomID];
-    if (roomID && room) {
-      removePlayerData(room, roomID, socket)
-    }
-    io.emit('result', {
-      rooms: Object.keys(rooms),
-      numOnline: Object.keys(players).length
-    });
+    leaveRoom(socket);
   });
 
   io.emit('result', { numOnline: Object.keys(players).length })
@@ -86,6 +81,20 @@ io.on( "connect", ( socket ) => {
     isLoading: false
   })
 });
+
+function leaveRoom( socket ) {
+  let roomID = players[socket.id];
+  delete players[socket.id];
+  socket.leave(roomID);
+  let room = rooms[roomID];
+  if (room) {
+    removePlayerData(room, roomID, socket)
+  }
+  io.emit('result', {
+    rooms: Object.keys(rooms),
+    numOnline: Object.keys(players).length
+  });
+}
 
 function removePlayerData(room, roomID, socket) {
   room.deletePlayer(socket.id);

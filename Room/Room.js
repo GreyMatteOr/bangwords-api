@@ -12,6 +12,9 @@ class Room {
   }
 
   deletePlayer( id ) {
+    if (this.game.verifyGen(id)) {
+      this.game.setGenerator(null);
+    }
     delete this.players[id];
   }
 
