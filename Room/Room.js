@@ -18,6 +18,10 @@ class Room {
     delete this.players[id];
   }
 
+  getPlayerName( id ) {
+    return this.players[id].name;
+  }
+
   validate ( id ) {
     return Object.keys(this.players).includes(id);
   }

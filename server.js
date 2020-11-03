@@ -38,6 +38,14 @@ io.on( "connect", ( socket ) => {
     io.to(socket.id).emit('result', {inGame: false, isGenerator: null});
   })
 
+  socket.on( 'sendMessage', ( message ) => {
+    let roomID = players[socket.id];
+    let room = rooms[roomID];
+    let name = room.getPlayerName( socket.id );
+    message = `${name}: ${message}`;
+    io.in(roomID).emit('chatMessage', message)
+  })
+
   socket.on( 'setRole', ( isGenerator, userName ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
