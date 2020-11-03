@@ -14,7 +14,7 @@ class Player {
   }
 
   checkGameWon(word) {
-    if (this.correctGuesses.includes(this.wordToGuess)) {
+    if (this.correctGuesses.includes(word)) {
       return true;
     }
     let chars = word.split('');
