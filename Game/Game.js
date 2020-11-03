@@ -1,14 +1,33 @@
-const symbols = '\ .,!?@#$%^&*()"\':;{}[]\\|<>/';
-
 class Game {
   constructor(maxWrongAttempts = 6) {
     this.wordToGuess = '';
     this.maxWrongAttempts = maxWrongAttempts;
-    this.attemptedGuesses = [];
-    this.wrongGuesses = 0;
-    this.correctGuesses = [];
-    this.count = 0;
     this.generatorID = null;
+    this.players = {};
+    this.finished = 0;
+    this.winners = [];
+    this.count = 0;
+  }
+
+  addPlayer( id ) {
+    this.players[id] = new Player(id);
+  }
+
+  getNextPlayer() {
+    if (this.generatorID) {
+      let playerNames = Object.keys(this.players);
+      let current = playerIDs.indexOf(this.generatorID);
+      let indexOfNext = (current + 1) % playerIDs.length;
+      this.setGenerator(this.playerIDs[indexOfNext])
+      return this.playerIDs[indexOfNext];
+    } else {
+      this.setGenerator(Object.keys(this.players)[0])
+      return Object.keys(this.players)[0];
+    }
+  }
+
+  removePlayer( id ) {
+    delete this.players[id];
   }
 
   setWordToGuess(word) {
@@ -19,65 +38,21 @@ class Game {
     this.generatorID = id;
   }
 
-  getGuessesLeft() {
-    return this.maxWrongAttempts - this.wrongGuesses;
-  }
-
   isOver() {
-    return this.maxWrongAttempts === this.wrongGuesses || this.checkGameWon();
+    return this.finished === Object.keys(this.players).length;
   }
 
-  verifyGen(id) {
-    return this.generatorID === id;
+  verifyGen( player ) {
+    return this.generatorID === player.id;
   }
 
   reset(id) {
-    this.wordToGuess = '';
-    this.generatorID = id;
-    this.attemptedGuesses = [];
-    this.wrongGuesses = 0;
-    this.correctGuesses = [];
     this.count++;
-  }
-
-  reviewAttempt(guess) {
-    guess = guess.toLowerCase();
-    if (this.attemptedGuesses.includes(guess)) {
-      return;
-    }
-    this.attemptedGuesses.push(guess);
-    if (this.wordToGuess != guess && !this.wordToGuess.includes(guess)) {
-      this.wrongGuesses += 1;
-      return `'${guess}' was a bad guess.`
-    } else {
-      this.correctGuesses.push(guess);
-      return this.checkGameWon();
-    }
-  }
-
-  checkGameWon() {
-    let theWordSplit = this.wordToGuess.split('');
-    if (this.correctGuesses.slice(-1)[0] == this.wordToGuess) {
-      return true;
-    }
-    let revealedAll = theWordSplit.every(letter => {
-      return this.correctGuesses.includes(letter) || symbols.includes(letter);
-    });
-    if (revealedAll) {
-      return true;
-    }
-    return false;
-  }
-
-  displayRevealed() {
-    let theWordSplit = this.wordToGuess.split('');
-    return theWordSplit.map(letter => {
-      if (this.correctGuesses.includes(letter) ||
-        symbols.includes(letter)) {
-        return letter;
-      }
-      return '_';
-    })
+    this.finished = 0;
+    this.generatorID = getNextPlayer();
+    this.winners = []
+    this.wordToGuess = '';
+    this.players.forEach( player = player.reset())
   }
 }
 
