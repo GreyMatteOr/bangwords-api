@@ -28,12 +28,12 @@ class Game {
   }
 
   verifyGen(id) {
-    return +this.generatorID === +id;
+    return this.generatorID === id;
   }
 
-  reset() {
+  reset(id) {
     this.wordToGuess = '';
-    this.generatorID = null;
+    this.generatorID = id;
     this.attemptedGuesses = [];
     this.wrongGuesses = 0;
     this.correctGuesses = [];

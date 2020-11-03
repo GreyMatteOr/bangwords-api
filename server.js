@@ -13,6 +13,7 @@ app.set('port', process.env.PORT || 3001);
 
 io.on( "connect", ( socket ) => {
   console.log(`${socket.id.slice(0, -8)} connected.`)
+  players[socket.id] = null;
 
   socket.on( 'createRoom', ( id ) => {
     if (!rooms[id]) {
@@ -32,20 +33,25 @@ io.on( "connect", ( socket ) => {
     }
   });
 
-  socket.on( 'setRole', ( isGenerator ) => {
+  socket.on( 'leaveRoom', () => {
+    leaveRoom(socket);
+    io.to(socket.id).emit('result', {inGame: false, isGenerator: null});
+  })
+
+  socket.on( 'setRole', ( isGenerator, userName ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
     if (isGenerator) {
       room.game.setGenerator(socket.id);
     }
-    room.addPlayer(socket.id);
+    room.addPlayer(socket.id, userName);
     io.in(roomID).emit('result', room.getStateData())
   })
 
   socket.on( 'setWord', ( word ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
-    room.game.reset();
+    room.game.reset(socket.id);
     room.game.setWordToGuess(word);
     io.in(roomID).emit('result', room.getStateData())
   })
@@ -66,24 +72,36 @@ io.on( "connect", ( socket ) => {
 
   socket.on( "disconnect", () => {
     console.log(`${socket.id.slice(0, -8)} disconnected.`)
-    let roomID = players[socket.id];
-    if (roomID) {
-      cleanData(roomID, socket)
-    }
+    leaveRoom(socket);
   });
 
-  let state = {isLoading: false, rooms: Object.keys(rooms)}
-  io.to(socket.id).emit('result', state)
+  io.emit('result', { numOnline: Object.keys(players).length })
+  io.to(socket.id).emit('result', {
+    rooms: Object.keys(rooms),
+    isLoading: false
+  })
 });
 
-function cleanData(roomID, socket) {
+function leaveRoom( socket ) {
+  let roomID = players[socket.id];
+  delete players[socket.id];
   socket.leave(roomID);
   let room = rooms[roomID];
+  if (room) {
+    removePlayerData(room, roomID, socket)
+  }
+  io.emit('result', {
+    rooms: Object.keys(rooms),
+    numOnline: Object.keys(players).length
+  });
+}
+
+function removePlayerData(room, roomID, socket) {
   room.deletePlayer(socket.id);
-  delete players[socket.id];
   if (room.getPlayerCount() <= 0) {
     delete rooms[roomID];
   }
+  io.in(roomID).emit('result', room.getStateData());
 }
 
 function clearGame(resp) {
