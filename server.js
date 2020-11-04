@@ -18,8 +18,8 @@ io.on( "connect", ( socket ) => {
   socket.on( 'createRoom', ( id ) => {
     if (!rooms[id]) {
       rooms[id] = new Room(id);
+      io.to(socket.id).emit('result', joinRoom(socket, rooms[id]));
       io.emit('result', {rooms: Object.keys(rooms)});
-      io.in(id).emit('result', joinRoom(socket, id));
     } else {
       io.to(socket.id).emit('result', {errorMSG: `A room with the name '${id}' already exists! Choose again`});
     }
@@ -90,50 +90,35 @@ io.on( "connect", ( socket ) => {
   })
 });
 
+function joinRoom(socket, room) {
+  socket.join(room.id);
+  players[socket.id] = room.id;
+  let info = {
+    inRoom: true,
+    hasGenerator: room.game.generatorID !== null
+  }
+  return info;
+}
+
 function leaveRoom( socket ) {
   let roomID = players[socket.id];
-  delete players[socket.id];
+  players[socket.id] = null;
   socket.leave(roomID);
   let room = rooms[roomID];
+  let changedState = {}
   if (room) {
-    removePlayerData(room, roomID, socket)
+    room.deletePlayer(socket.id);
+    if (room.getPlayerCount() <= 0) {
+      delete rooms[room.id];
+    } else {
+      io.in(room.id).emit('result', {playerNames: Object.values(room.playerNames)})
+    }
   }
-  io.emit('result', {
-    rooms: Object.keys(rooms),
-    numOnline: Object.keys(players).length
-  });
-}
-
-function removePlayerData(room, roomID, socket) {
-  room.deletePlayer(socket.id);
-  if (room.getPlayerCount() <= 0) {
-    delete rooms[roomID];
-  }
-  io.in(roomID).emit('result', room.getStateData());
-}
-
-function clearGame(resp) {
-  game.reset();
-  players = [];
-  resp.status(200).json({
-    numPlayers: players.length,
-    isGenerator: null,
-    attempts: [],
-    isOver: false,
-    display: []
-  });
-}
-
-function joinRoom(socket, roomID) {
-  socket.join(roomID);
-  players[socket.id] = roomID;
-  let state = rooms[roomID].getStateData();
-  state["inGame"] = true;
-  return state;
+  return {rooms: Object.keys(rooms)};
 }
 
 server.listen(app.get('port'), () => {
   console.log(`Listening on port ${app.get('port')}.`);
 });
 
-module.exports = { server, rooms };
+module.exports = { server, rooms, players, joinRoom, leaveRoom };

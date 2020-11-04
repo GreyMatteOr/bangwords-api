@@ -1,17 +1,16 @@
 let io = require('socket.io-client');
-let { server, rooms } = require('./server.js');
-let request = require('supertest');
-let Game = require('./Game/Game.js');
+let { server, rooms, players, joinRoom, leaveRoom } = require('./server.js');
+const Room = require('./Room/Room.js');
 
-let socket, app, socketIsLoaded, callCount, result;
+let result = [], callCount = 0, socket, app;
 
 function mockSetState(data, done) {
   callCount++;
-  result = data;
+  result.push(data);
   done();
 }
 
-describe('server', function() {
+describe('server', () => {
 
   beforeAll( (done) => {
     socket = io.connect('http://localhost:3001', {
@@ -21,73 +20,165 @@ describe('server', function() {
     });
 
     socket.on('connect', function() {
-      socketIsLoaded = true;
       done();
     });
 
     socket.on('result', (data) => mockSetState(data, done) );
-  });
-
-  it('should connect on load', async (done) => {
-    expect(socketIsLoaded).toEqual(true)
     done();
   });
 
-  it('should be able to join a game', async (done) => {
-    callCount = 0;
-    socket.emit('joinGame', true);
+  it('should let a socket connect', async (done) => {
     setTimeout(() => {
-      expect(callCount).toEqual(1);
-      expect(result).toEqual({
-        display: [],
-        isOver: false,
-        remainingGuesses: 6,
-        attempts: [],
-        isGameReady: false
-      })
-      done();
-    }, 50)
-  });
-
-  it('should be able to set a word', async (done) => {
-    callCount = 0;
-    socket.emit('setWord', 'debug');
-    setTimeout(() => {
-      expect(callCount).toEqual(1);
-      expect(result).toEqual({
-        display: ['_', '_', '_', '_', '_'],
-        isOver: false,
-        remainingGuesses: 6,
-        attempts: [],
-        isGameReady: false
-      })
-      done();
-    }, 400)
-  });
-
-  it('should be able to make a guess', async (done) => {
-    callCount = 0;
-    socket.emit('makeGuess', 'd');
-    socket.emit('makeGuess', 'x')
-    setTimeout(() => {
+      expect(socket.connected).toEqual(true);
       expect(callCount).toEqual(2);
-      expect(result).toEqual({
-        display: ['d', '_', '_', '_', '_'],
-        isOver: false,
-        remainingGuesses: 5,
-        attempts: ['d', 'x'],
-        isGameReady: false
-      })
+      expect(result).toEqual([
+        {numOnline: 1},
+        {rooms: [], isLoading: false}
+      ])
       done();
-    }, 80)
+    }, 80);
   });
 
+  describe('methods', () => {
+
+    describe('joinRoom', () => {
+
+      it('should add a socket to a `room`', (done) => {
+
+        let joinedRooms = []
+        socket.join = (roomID) => joinedRooms.push(roomID)
+        rooms['debug1'] = new Room('debug1');
+
+        expect(joinRoom(socket, rooms['debug1'])).toEqual({
+          inRoom: true,
+          hasGenerator: false
+        });
+
+        expect(joinedRooms).toEqual(['debug1']);
+        expect(players).toEqual({[socket.id]: 'debug1'})
+        done();
+      });
+    })
+
+    describe('leaveRoom', () => {
+
+      it('should remove a socket from a `room`', (done) => {
+
+        let joinedRooms = []
+        socket.join = (roomID) => joinedRooms.push(roomID)
+        socket.leave = (roomID) => {
+          joinedRooms = joinedRooms.filter(id => id !== roomID);
+        }
+        rooms['debug1'] = new Room('debug1');
+
+        joinRoom(socket, rooms['debug1']);
+
+        expect(leaveRoom(socket)).toEqual({rooms: []});
+        expect(players).toEqual({[socket.id]: null});
+        expect(joinedRooms).toEqual([]);
+        done();
+      });
+
+      it('should delete the room if afterwards it is empty', (done) => {
+        expect(rooms).toEqual({});
+        done();
+      });
+    });
+  });
+
+  describe('socket-events', () => {
+
+    describe('createRoom', () => {
+
+      it('should be able to create a room', async (done) => {
+        callCount = 0;
+        result = [];
+        socket.emit('createRoom', 'debug-room');
+        setTimeout(() => {
+          expect(callCount).toEqual(2);
+          expect(result).toEqual([
+            {hasGenerator: false, inRoom: true},
+            {rooms:['debug-room']}
+          ]);
+          expect(rooms).toEqual({'debug-room': new Room('debug-room')});
+          expect(players[socket.id]).toEqual('debug-room');
+          done();
+        }, 80)
+      });
+
+      it('should not be ablt to create a room that exists already', async (done) => {
+        callCount = 0;
+        result = [];
+        socket.emit('createRoom', 'debug-room');
+        setTimeout(() => {
+          expect(callCount).toEqual(1);
+          expect(result).toEqual([
+            {errorMSG: `A room with the name 'debug-room' already exists! Choose again`}
+          ]);
+          expect(rooms).toEqual({'debug-room': new Room('debug-room')});
+          expect(players[socket.id]).toEqual('debug-room');
+          done();
+        }, 80)
+      });
+
+    it('should be able to join a game', async (done) => {
+      callCount = 0;
+      socket.emit('joinRoom', 'debug-room');
+      setTimeout(() => {
+        expect(callCount).toEqual(1);
+        expect(result).toEqual({
+          display: [],
+          isOver: false,
+          remainingGuesses: 6,
+          attempts: [],
+          isGameReady: false
+        })
+        done();
+      }, 70)
+    });
+
+    it('should be able to set a word', async (done) => {
+      callCount = 0;
+      socket.emit('setWord', 'debug');
+      setTimeout(() => {
+        expect(callCount).toEqual(1);
+        expect(result).toEqual({
+          display: ['_', '_', '_', '_', '_'],
+          isOver: false,
+          remainingGuesses: 6,
+          attempts: [],
+          isGameReady: false
+        })
+        done();
+      }, 400)
+    });
+
+    it('should be able to make a guess', async (done) => {
+      callCount = 0;
+      socket.emit('makeGuess', 'd');
+      socket.emit('makeGuess', 'x')
+      setTimeout(() => {
+        expect(callCount).toEqual(2);
+        expect(result).toEqual({
+          display: ['d', '_', '_', '_', '_'],
+          isOver: false,
+          remainingGuesses: 5,
+          attempts: ['d', 'x'],
+          isGameReady: false
+        })
+        done();
+      }, 80)
+    });
+
+  });
+  });
   afterAll( (done) => {
     if(socket.connected) {
-      socketIsLoaded = false;
       socket.disconnect();
     }
-    server.close(done)
-    done();
+    setTimeout(() => {
+      server.close(done)
+      done();
+    }, 0);
   });
 });
