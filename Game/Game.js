@@ -40,11 +40,19 @@ class Game {
   }
 
   getPlayerScore( id ) {
-    return this.players[id].score;
+    let player = this.players[id];
+    let didWin = null;
+    if (player.hasWon) didWin = true;
+    else if (player.getAttemptsLeft() === 0) didWin = false;
+    return {
+      score: player.score,
+      attempts: player.getAttemptsLeft(),
+      didWin
+    }
   }
 
   isOver() {
-    return this.finished === Object.keys(this.players).length;
+    return this.finished === Object.keys(this.players).length - 1;
   }
 
   makeGuess( playerID, guess) {

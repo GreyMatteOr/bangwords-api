@@ -35,7 +35,7 @@ io.on( "connect", ( socket ) => {
 
   socket.on( 'leaveRoom', () => {
     leaveRoom(socket);
-    io.to(socket.id).emit('result', {inGame: false, isGenerator: null});
+    io.to(socket.id).emit('result', {inRoom: false, isGenerator: null});
   })
 
   socket.on( 'makeGuess', ( guess ) => {
@@ -43,6 +43,9 @@ io.on( "connect", ( socket ) => {
     let room = rooms[roomID];
     room.game.makeGuess(socket.id, guess);
     io.to(socket.id).emit('result', room.getGuessResponse(socket.id))
+    if(room.game.isOver()){
+      io.in(roomID).emit('result', {isOver: true});
+    }
   })
 
   socket.on( 'sendMessage', ( message ) => {
@@ -64,7 +67,8 @@ io.on( "connect", ( socket ) => {
     socket.to(roomID).emit('result', {
       hasGenerator: room.game.generatorID !== null,
       isGameReady: room.isGameReady(),
-      playerNames: Object.values(room.playerNames)
+      playerNames: Object.values(room.playerNames),
+      scores: room.getScores()
     })
   })
 
@@ -78,10 +82,10 @@ io.on( "connect", ( socket ) => {
   })
 
   socket.on( "disconnect", () => {
-    let newState = leaveRoom(socket);
+    leaveRoom(socket);
     delete players[socket.id];
-    newState.numOnline = Object.keys(players).length;
-    // console.log(`${socket.id.slice(0, -8)} disconnected.`)
+    io.emit('results', {numOnline: Object.keys(players).length})
+    console.log(`${socket.id.slice(0, -8)} disconnected.`)
   });
 
   io.emit('result', { numOnline: Object.keys(players).length })
@@ -107,15 +111,13 @@ function leaveRoom( socket ) {
   socket.leave(roomID);
   let room = rooms[roomID];
   let changedState = {}
-  if (room) {
-    room.deletePlayer(socket.id);
-    if (room.getPlayerCount() <= 0) {
-      delete rooms[room.id];
-    } else {
-      io.in(room.id).emit('result', {playerNames: Object.values(room.playerNames)})
-    }
+  room.deletePlayer(socket.id);
+  if (room.getPlayerCount() <= 0) {
+    delete rooms[room.id];
+    io.emit('result', {rooms: Object.keys(rooms)})
+  } else {
+    io.in(room.id).emit('result', {playerNames: Object.values(room.playerNames)})
   }
-  return {rooms: Object.keys(rooms)};
 }
 
 server.listen(app.get('port'), () => {
