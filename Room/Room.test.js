@@ -58,5 +58,52 @@ describe('Room', () => {
         expect(room.game.players).toEqual({'qwer': new Player('qwer', 6)});
       });
     });
+
+    describe('getPlayerName', () => {
+
+      it('should get the userName associated with an id', () => {
+        room.addPlayer('asdf', 'one');
+        expect(room.getPlayerName('asdf')).toEqual('one');
+      });
+    });
+
+    describe('getStateData', () => {
+
+      it('should return the important info to display', () => {
+        room.addPlayer('asdf', 'one');
+        room.game.setGuessWord('debug');
+        room.game.makeGuess('asdf', 'd');
+        room.game.makeGuess('asdf', 'x');
+
+        expect(room.getStateData('asdf')).toEqual({
+          attempts: ['d', 'x'],
+          attemptsLeft: 5,
+          display: ['d','_','_','_','_'],
+          hasGenerator: false,
+          isGameReady: false,
+          isOver: false,
+          isWon: false,
+          playerNames: ['one'],
+          scores: {'one': 0}
+        });
+
+        room.addPlayer('qwer', 'two');
+        room.game.setGenerator('qwer')
+
+        room.game.makeGuess('asdf', 'debug');
+        expect(room.getStateData('asdf')).toEqual({
+          attempts: ['d', 'x', 'debug'],
+          attemptsLeft: 5,
+          display: ['d','_','_','_','_'],
+          hasGenerator: true,
+          isGameReady: true,
+          isOver: false,
+          isWon: true,
+          playerNames: ['one', 'two'],
+          scores: {'one': 100, 'two': 0}
+        });
+
+      });
+    });
   });
 });

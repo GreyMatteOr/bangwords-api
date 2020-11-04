@@ -62,6 +62,16 @@ describe('Game', () => {
         a.deletePlayer(123);
         expect(a.players).toEqual({'321': new Player(321, 6)});
       });
+
+
+      it('if the deleted player was the generator, the game should update', () => {
+        a.addPlayer(123);
+        a.setGenerator(123);
+        expect(a.generatorID).toEqual(123);
+
+        a.deletePlayer(123);
+        expect(a.generatorID).toEqual(null);
+      });
     });
 
     describe('getNextPlayer', () => {
@@ -136,18 +146,6 @@ describe('Game', () => {
         a.makeGuess('one', 'debad');
         expect(a.winners).toEqual([])
         expect(a.finished).toEqual(1)
-      });
-    });
-
-    describe('removePlayer', () => {
-
-      it('should delete a player from the `players` Object', () => {
-        a.addPlayer('one');
-        expect(a.players['one']).toBeInstanceOf(Player);
-
-        a.removePlayer('one');
-        expect(a.players).toEqual({});
-
       });
     });
 

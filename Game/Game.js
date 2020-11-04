@@ -17,6 +17,9 @@ class Game {
 
   deletePlayer( id ) {
     delete this.players[id];
+    if (this.verifyGen(id)) {
+      this.setGenerator(null);
+    }
   }
 
   getNextPlayer() {
@@ -30,6 +33,14 @@ class Game {
       this.setGenerator(Object.keys(this.players)[0])
       return Object.keys(this.players)[0];
     }
+  }
+
+  getPlayer( id ) {
+    return this.players[id];
+  }
+
+  getPlayerScore( id ) {
+    return this.players[id].score;
   }
 
   isOver() {
@@ -46,10 +57,6 @@ class Game {
     } else if (player.getAttemptsLeft() <= 0) {
       this.finished++;
     }
-  }
-
-  removePlayer( id ) {
-    delete this.players[id];
   }
 
   setGuessWord(word) {

@@ -5,6 +5,7 @@ class Player {
     this.attempts = [];
     this.correct = [];
     this.id = id;
+    this.hasWon = false;
     this.maxWrongAttempts = maxWrongAttempts;
     this.score = 0;
     this.wrongAttempts = 0;
@@ -69,13 +70,18 @@ class Player {
   reset() {
     this.attempts = [];
     this.correct = [];
+    this.hasWon = false;
     this.wrongAttempts = 0;
   }
 
   scoreGame(word = '') {
+    if (this.hasWon) {
+      return;
+    }
     let basePoints = 10 * this.getAttemptsLeft();
     let bonusPoints = 5 * this.getRevealed(word, true);
     this.addPoints( basePoints + bonusPoints );
+    this.hasWon = true;
   }
 }
 
