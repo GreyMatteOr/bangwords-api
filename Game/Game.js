@@ -1,3 +1,5 @@
+const Player = require('../Player/Player.js');
+
 class Game {
   constructor(maxWrongAttempts = 6) {
     this.wordToGuess = '';
@@ -15,22 +17,26 @@ class Game {
 
   getNextPlayer() {
     if (this.generatorID) {
-      let playerNames = Object.keys(this.players);
+      let playerIDs = Object.keys(this.players);
       let current = playerIDs.indexOf(this.generatorID);
       let indexOfNext = (current + 1) % playerIDs.length;
-      this.setGenerator(this.playerIDs[indexOfNext])
-      return this.playerIDs[indexOfNext];
+      this.setGenerator(playerIDs[indexOfNext])
+      return playerIDs[indexOfNext];
     } else {
       this.setGenerator(Object.keys(this.players)[0])
       return Object.keys(this.players)[0];
     }
   }
 
+  isOver() {
+    return this.finished === Object.keys(this.players).length;
+  }
+
   removePlayer( id ) {
     delete this.players[id];
   }
 
-  setWordToGuess(word) {
+  setGuessWord(word) {
     this.wordToGuess = word.toLowerCase();
   }
 
@@ -38,21 +44,18 @@ class Game {
     this.generatorID = id;
   }
 
-  isOver() {
-    return this.finished === Object.keys(this.players).length;
+  verifyGen( playerID ) {
+    return this.generatorID === playerID;
   }
 
-  verifyGen( player ) {
-    return this.generatorID === player.id;
-  }
-
-  reset(id) {
+  reset() {
     this.count++;
     this.finished = 0;
-    this.generatorID = getNextPlayer();
+    this.generatorID = this.getNextPlayer();
     this.winners = []
     this.wordToGuess = '';
-    this.players.forEach( player = player.reset())
+    Object.values(this.players).forEach( player => player.reset())
+
   }
 }
 

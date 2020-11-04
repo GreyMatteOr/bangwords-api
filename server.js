@@ -60,7 +60,7 @@ io.on( "connect", ( socket ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
     room.game.reset(socket.id);
-    room.game.setWordToGuess(word);
+    room.game.setGuessWord(word);
     io.in(roomID).emit('result', room.getStateData())
   })
 
