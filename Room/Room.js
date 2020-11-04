@@ -3,49 +3,80 @@ const Game = require('../Game/Game.js');
 class Room {
   constructor( id ) {
     this.id = id;
-    this.players = {};
+    this.playerNames = {};
     this.game = new Game();
   }
 
   addPlayer( id, name ) {
-    this.players[id] = {name, score: 0};
+    this.playerNames[id] = name;
+    this.game.addPlayer( id );
   }
 
   deletePlayer( id ) {
-    if (this.game.verifyGen(id)) {
-      this.game.setGenerator(null);
-    }
-    delete this.players[id];
+    delete this.playerNames[id];
+    this.game.deletePlayer(id);
   }
 
   getPlayerName( id ) {
-    return this.players[id].name;
+    return this.playerNames[id];
   }
 
-  validate ( id ) {
-    return Object.keys(this.players).includes(id);
-  }
-
-  getStateData() {
-    let game = this.game;
+  getGuessResponse( id ) {
+    let player = this.game.getPlayer( id );
+    let { guessWord } = this.game;
     return {
-      attempts: game.attemptedGuesses,
-      display: game.displayRevealed(),
-      hasGenerator: game.generatorID !== null,
+      attempts: player.attempts,
+      attemptsLeft: player.getAttemptsLeft(),
+      display: player.getRevealed(guessWord),
+      isWon: player.checkGameWon(guessWord)
+    }
+  }
+
+  getLoadData( id ) {
+    let player = this.game.getPlayer( id );
+    let { guessWord } = this.game;
+    return {
+      attempts: [],
+      attemptsLeft: player.getAttemptsLeft(),
+      display: player.getRevealed(guessWord),
+      hasGenerator: this.game.generatorID !== null,
       isGameReady: this.isGameReady(),
-      isOver: game.isOver(),
-      isWon: game.checkGameWon(),
-      playerNames: Object.values(this.players).map(player => player.name),
-      remainingGuesses: game.getGuessesLeft()
+      isOver: this.game.isOver(),
+      isWon: false,
+      playerNames: Object.values(this.playerNames),
+      scores: this.getScores()
+    }
+  }
+
+  getStateData( id ) {
+    let player = this.game.getPlayer( id );
+    let { guessWord } = this.game;
+    return {
+      attempts: player.attempts,
+      attemptsLeft: player.getAttemptsLeft(),
+      display: player.getRevealed(guessWord),
+      hasGenerator: this.game.generatorID !== null,
+      isGameReady: this.isGameReady(),
+      isOver: this.game.isOver(),
+      isWon: player.checkGameWon(guessWord),
+      playerNames: Object.values(this.playerNames),
+      scores: this.getScores()
     }
   }
 
   getPlayerCount() {
-    return Object.keys(this.players).length;
+    return Object.keys(this.playerNames).length;
+  }
+
+  getScores() {
+    return Object.entries(this.playerNames).reduce((scores, [id, name]) => {
+      scores[name] = this.game.getPlayerScore( id );
+      return scores;
+    }, {});
   }
 
   isGameReady() {
-    return this.getPlayerCount() >= 2 && !this.game.isOver() && this.game.wordToGuess !== '';
+    return this.getPlayerCount() >= 2 && !this.game.isOver() && this.game.guessWord !== '';
   }
 }
 

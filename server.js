@@ -18,8 +18,8 @@ io.on( "connect", ( socket ) => {
   socket.on( 'createRoom', ( id ) => {
     if (!rooms[id]) {
       rooms[id] = new Room(id);
+      io.to(socket.id).emit('result', joinRoom(socket, rooms[id]));
       io.emit('result', {rooms: Object.keys(rooms)});
-      io.in(id).emit('result', joinRoom(socket, id));
     } else {
       io.to(socket.id).emit('result', {errorMSG: `A room with the name '${id}' already exists! Choose again`});
     }
@@ -27,15 +27,22 @@ io.on( "connect", ( socket ) => {
 
   socket.on( 'joinRoom', ( id ) => {
     if (rooms[id]) {
-      io.in(id).emit('result', joinRoom(socket, id));
+      io.to(socket.id).emit('result', joinRoom(socket, rooms[id]));
     } else {
-      io.to(socket.id).emit('result', {errorMSG: `Room with name ${id} does not exist.`});
+      io.to(socket.id).emit('result', {errorMSG: `Room with name '${id}' does not exist.`});
     }
   });
 
   socket.on( 'leaveRoom', () => {
     leaveRoom(socket);
     io.to(socket.id).emit('result', {inGame: false, isGenerator: null});
+  })
+
+  socket.on( 'makeGuess', ( guess ) => {
+    let roomID = players[socket.id];
+    let room = rooms[roomID];
+    room.game.makeGuess(socket.id, guess);
+    io.to(socket.id).emit('result', room.getGuessResponse(socket.id))
   })
 
   socket.on( 'sendMessage', ( message ) => {
@@ -53,34 +60,28 @@ io.on( "connect", ( socket ) => {
       room.game.setGenerator(socket.id);
     }
     room.addPlayer(socket.id, userName);
-    io.in(roomID).emit('result', room.getStateData())
+    io.to(socket.id).emit('result', room.getLoadData( socket.id ))
+    socket.to(roomID).emit('result', {
+      hasGenerator: room.game.generatorID !== null,
+      isGameReady: room.isGameReady(),
+      playerNames: Object.values(room.playerNames)
+    })
   })
 
   socket.on( 'setWord', ( word ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
-    room.game.reset(socket.id);
-    room.game.setWordToGuess(word);
-    io.in(roomID).emit('result', room.getStateData())
-  })
-
-  socket.on( 'makeGuess', ( guess ) => {
-    let roomID = players[socket.id];
-    let room = rooms[roomID];
-    room.game.reviewAttempt(guess);
-    io.in(roomID).emit('result', room.getStateData())
-  })
-
-  socket.on( 'forfeit', () => {
-    let roomID = players[socket.id];
-    let room = rooms[roomID];
-    room.game.reset();
-    io.in(roomID).emit('result', room.getStateData());
+    room.game.setGuessWord(word);
+    Object.keys(room.playerNames).forEach( socketID => {
+      io.to(socketID).emit('result', room.getStateData( socketID ));
+    });
   })
 
   socket.on( "disconnect", () => {
-    console.log(`${socket.id.slice(0, -8)} disconnected.`)
-    leaveRoom(socket);
+    let newState = leaveRoom(socket);
+    delete players[socket.id];
+    newState.numOnline = Object.keys(players).length;
+    // console.log(`${socket.id.slice(0, -8)} disconnected.`)
   });
 
   io.emit('result', { numOnline: Object.keys(players).length })
@@ -90,50 +91,35 @@ io.on( "connect", ( socket ) => {
   })
 });
 
+function joinRoom(socket, room) {
+  socket.join(room.id);
+  players[socket.id] = room.id;
+  let info = {
+    inRoom: true,
+    hasGenerator: room.game.generatorID !== null
+  }
+  return info;
+}
+
 function leaveRoom( socket ) {
   let roomID = players[socket.id];
-  delete players[socket.id];
+  players[socket.id] = null;
   socket.leave(roomID);
   let room = rooms[roomID];
+  let changedState = {}
   if (room) {
-    removePlayerData(room, roomID, socket)
+    room.deletePlayer(socket.id);
+    if (room.getPlayerCount() <= 0) {
+      delete rooms[room.id];
+    } else {
+      io.in(room.id).emit('result', {playerNames: Object.values(room.playerNames)})
+    }
   }
-  io.emit('result', {
-    rooms: Object.keys(rooms),
-    numOnline: Object.keys(players).length
-  });
-}
-
-function removePlayerData(room, roomID, socket) {
-  room.deletePlayer(socket.id);
-  if (room.getPlayerCount() <= 0) {
-    delete rooms[roomID];
-  }
-  io.in(roomID).emit('result', room.getStateData());
-}
-
-function clearGame(resp) {
-  game.reset();
-  players = [];
-  resp.status(200).json({
-    numPlayers: players.length,
-    isGenerator: null,
-    attempts: [],
-    isOver: false,
-    display: []
-  });
-}
-
-function joinRoom(socket, roomID) {
-  socket.join(roomID);
-  players[socket.id] = roomID;
-  let state = rooms[roomID].getStateData();
-  state["inGame"] = true;
-  return state;
+  return {rooms: Object.keys(rooms)};
 }
 
 server.listen(app.get('port'), () => {
   console.log(`Listening on port ${app.get('port')}.`);
 });
 
-module.exports = { server, rooms };
+module.exports = { server, rooms, players, joinRoom, leaveRoom };

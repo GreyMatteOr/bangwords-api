@@ -1,83 +1,84 @@
-const symbols = '\ .,!?@#$%^&*()"\':;{}[]\\|<>/';
+const Player = require('../Player/Player.js');
 
 class Game {
   constructor(maxWrongAttempts = 6) {
-    this.wordToGuess = '';
+    this.guessWord = '';
     this.maxWrongAttempts = maxWrongAttempts;
-    this.attemptedGuesses = [];
-    this.wrongGuesses = 0;
-    this.correctGuesses = [];
-    this.count = 0;
     this.generatorID = null;
+    this.players = {};
+    this.finished = 0;
+    this.winners = [];
+    this.count = 0;
   }
 
-  setWordToGuess(word) {
-    this.wordToGuess = word.toLowerCase();
+  addPlayer( id ) {
+    this.players[id] = new Player(id, this.maxWrongAttempts);
+  }
+
+  deletePlayer( id ) {
+    delete this.players[id];
+    if (this.verifyGen(id)) {
+      this.setGenerator(null);
+    }
+  }
+
+  getNextPlayer() {
+    if (this.generatorID) {
+      let playerIDs = Object.keys(this.players);
+      let current = playerIDs.indexOf(this.generatorID);
+      let indexOfNext = (current + 1) % playerIDs.length;
+      this.setGenerator(playerIDs[indexOfNext])
+      return playerIDs[indexOfNext];
+    } else {
+      this.setGenerator(Object.keys(this.players)[0])
+      return Object.keys(this.players)[0];
+    }
+  }
+
+  getPlayer( id ) {
+    return this.players[id];
+  }
+
+  getPlayerScore( id ) {
+    return this.players[id].score;
+  }
+
+  isOver() {
+    return this.finished === Object.keys(this.players).length;
+  }
+
+  makeGuess( playerID, guess) {
+    let player = this.players[playerID];
+    let justWon = player.attempt(this.guessWord, guess);
+    if (justWon) {
+      player.addPoints(Math.max(30 - (this.winners.length * 10), 0));
+      this.winners.push(playerID);
+      this.finished++;
+    } else if (player.getAttemptsLeft() <= 0) {
+      this.finished++;
+    }
+  }
+
+  setGuessWord(word) {
+    this.guessWord = word.toLowerCase();
   }
 
   setGenerator(id) {
     this.generatorID = id;
   }
 
-  getGuessesLeft() {
-    return this.maxWrongAttempts - this.wrongGuesses;
+  verifyGen( playerID ) {
+    return this.generatorID === playerID;
   }
 
-  isOver() {
-    return this.maxWrongAttempts === this.wrongGuesses || this.checkGameWon();
-  }
-
-  verifyGen(id) {
-    return this.generatorID === id;
-  }
-
-  reset(id) {
-    this.wordToGuess = '';
-    this.generatorID = id;
-    this.attemptedGuesses = [];
-    this.wrongGuesses = 0;
-    this.correctGuesses = [];
+  reset() {
     this.count++;
-  }
+    this.finished = 0;
+    this.generatorID = this.getNextPlayer();
+    this.winners = []
+    this.guessWord = '';
+    Object.values(this.players).forEach( player => player.reset())
 
-  reviewAttempt(guess) {
-    guess = guess.toLowerCase();
-    if (this.attemptedGuesses.includes(guess)) {
-      return;
-    }
-    this.attemptedGuesses.push(guess);
-    if (this.wordToGuess != guess && !this.wordToGuess.includes(guess)) {
-      this.wrongGuesses += 1;
-      return `'${guess}' was a bad guess.`
-    } else {
-      this.correctGuesses.push(guess);
-      return this.checkGameWon();
-    }
-  }
-
-  checkGameWon() {
-    let theWordSplit = this.wordToGuess.split('');
-    if (this.correctGuesses.slice(-1)[0] == this.wordToGuess) {
-      return true;
-    }
-    let revealedAll = theWordSplit.every(letter => {
-      return this.correctGuesses.includes(letter) || symbols.includes(letter);
-    });
-    if (revealedAll) {
-      return true;
-    }
-    return false;
-  }
-
-  displayRevealed() {
-    let theWordSplit = this.wordToGuess.split('');
-    return theWordSplit.map(letter => {
-      if (this.correctGuesses.includes(letter) ||
-        symbols.includes(letter)) {
-        return letter;
-      }
-      return '_';
-    })
   }
 }
 
