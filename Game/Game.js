@@ -15,6 +15,10 @@ class Game {
     this.players[id] = new Player(id, this.maxWrongAttempts);
   }
 
+  deletePlayer( id ) {
+    delete this.players[id];
+  }
+
   getNextPlayer() {
     if (this.generatorID) {
       let playerIDs = Object.keys(this.players);

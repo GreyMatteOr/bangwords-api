@@ -3,27 +3,29 @@ const Game = require('../Game/Game.js');
 class Room {
   constructor( id ) {
     this.id = id;
-    this.players = {};
+    this.playerNames = {};
     this.game = new Game();
   }
 
   addPlayer( id, name ) {
-    this.players[id] = {name, score: 0};
+    this.playerNames[id] = name;
+    this.game.addPlayer( id );
   }
 
   deletePlayer( id ) {
     if (this.game.verifyGen(id)) {
       this.game.setGenerator(null);
     }
-    delete this.players[id];
+    delete this.playerNames[id];
+    this.game.deletePlayer(id)
   }
 
   getPlayerName( id ) {
-    return this.players[id].name;
+    return this.playerNames[id].name;
   }
 
   validate ( id ) {
-    return Object.keys(this.players).includes(id);
+    return Object.keys(this.playerNames).includes(id);
   }
 
   getStateData() {
@@ -35,13 +37,13 @@ class Room {
       isGameReady: this.isGameReady(),
       isOver: game.isOver(),
       isWon: game.checkGameWon(),
-      playerNames: Object.values(this.players).map(player => player.name),
+      playerNames: Object.values(this.playerNames).map(player => player.name),
       remainingGuesses: game.getGuessesLeft()
     }
   }
 
   getPlayerCount() {
-    return Object.keys(this.players).length;
+    return Object.keys(this.playerNames).length;
   }
 
   isGameReady() {

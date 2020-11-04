@@ -52,6 +52,18 @@ describe('Game', () => {
       });
     });
 
+    describe('deletePlayer', () => {
+
+      it('should be able to delete a player', () => {
+        a.addPlayer(123);
+        a.addPlayer(321);
+
+        a.deletePlayer(123);
+        a.deletePlayer(123);
+        expect(a.players).toEqual({'321': new Player(321, 6)});
+      });
+    });
+
     describe('getNextPlayer', () => {
 
       it('should cycle the player', () => {
@@ -67,7 +79,7 @@ describe('Game', () => {
 
       });
     });
-    
+
     describe('isOver', () => {
 
       it('should return `true` if everyone has finished, else `false`', () => {
