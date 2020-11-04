@@ -2,7 +2,7 @@ const Player = require('../Player/Player.js');
 
 class Game {
   constructor(maxWrongAttempts = 6) {
-    this.wordToGuess = '';
+    this.guessWord = '';
     this.maxWrongAttempts = maxWrongAttempts;
     this.generatorID = null;
     this.players = {};
@@ -12,7 +12,7 @@ class Game {
   }
 
   addPlayer( id ) {
-    this.players[id] = new Player(id);
+    this.players[id] = new Player(id, this.maxWrongAttempts);
   }
 
   getNextPlayer() {
@@ -32,12 +32,24 @@ class Game {
     return this.finished === Object.keys(this.players).length;
   }
 
+  makeGuess( playerID, guess) {
+    let player = this.players[playerID];
+    let justWon = player.attempt(this.guessWord, guess);
+    if (justWon) {
+      player.addPoints(Math.max(30 - (this.winners.length * 10), 0));
+      this.winners.push(playerID);
+      this.finished++;
+    } else if (player.getAttemptsLeft() <= 0) {
+      this.finished++;
+    }
+  }
+
   removePlayer( id ) {
     delete this.players[id];
   }
 
   setGuessWord(word) {
-    this.wordToGuess = word.toLowerCase();
+    this.guessWord = word.toLowerCase();
   }
 
   setGenerator(id) {
@@ -53,7 +65,7 @@ class Game {
     this.finished = 0;
     this.generatorID = this.getNextPlayer();
     this.winners = []
-    this.wordToGuess = '';
+    this.guessWord = '';
     Object.values(this.players).forEach( player => player.reset())
 
   }

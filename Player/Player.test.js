@@ -3,25 +3,26 @@ const Player = require('./Player.js');
 describe('Player', () => {
   let player
   beforeEach(() => {
-    player = new Player(1);
+    player = new Player('name', 6);
   })
   describe('initialization', () => {
 
     it('should have properties', () => {
       expect(player.attempts).toEqual([])
       expect(player.correct).toEqual([])
-      expect(player.id).toEqual(1)
+      expect(player.id).toEqual('name')
+      expect(player.maxWrongAttempts).toEqual(6);
       expect(player.score).toEqual(0)
       expect(player.wrongAttempts).toEqual(0)
     });
   });
   describe('methods', () => {
 
-    describe('addScore', () => {
+    describe('addPoints', () => {
 
-      it('should be able to addScore', () => {
+      it('should be able to addPoints', () => {
 
-        player.addScore(5);
+        player.addPoints(5);
         expect(player.score).toEqual(5);
       });
     });
@@ -44,18 +45,30 @@ describe('Player', () => {
 
         player.correct = ['d', 'e', 'b', 'u', 'gebug']
         expect(player.checkGameWon('debug')).toEqual(false);
+      })
 
+      it('should add 10 points per attemptLeft after a win', () => {
+        player.correct = ['d', 'e', 'b', 'x', 'u', 'g'];
+        player.wrongAttempts = 4;
+        player.checkGameWon('debug');
+        expect(player.score).toEqual(20);
+      })
+
+      it('should an additional 5 points per blank', () => {
+        player.correct = ['d', 'e', 'b', 'x', 'u', 'debug'];
+        player.wrongAttempts = 1;
+        player.checkGameWon('debug');
+        expect(player.score).toEqual(55);
       })
     })
 
     describe('getAttemptsLeft', () => {
 
       it('should return the number of attempts a player has left', () => {
-        expect(player.getAttemptsLeft(6)).toEqual(6);
-        expect(player.getAttemptsLeft(8)).toEqual(8);
+        expect(player.getAttemptsLeft()).toEqual(6);
 
         player.wrongAttempts = 10;
-        expect(player.getAttemptsLeft(8)).toEqual(-2);
+        expect(player.getAttemptsLeft()).toEqual(-4);
       });
     });
 
@@ -88,52 +101,52 @@ describe('Player', () => {
       });
     });
 
-    describe('reviewAttempt', () => {
+    describe('attempt', () => {
 
       it("should increase `this.wrongAttempts` when wrong", () => {
 
-        player.reviewAttempt('game', 'C');
-        player.reviewAttempt('game', 'd');
+        player.attempt('game', 'C');
+        player.attempt('game', 'd');
 
         expect(player.wrongAttempts).toEqual(2);
       });
 
       it("should not affect `this.wrongAttempts` on a correct guess or one that has already occured ", () => {
 
-        player.reviewAttempt('game', 'g');
-        player.reviewAttempt('game', 'G');
+        player.attempt('game', 'g');
+        player.attempt('game', 'G');
 
         expect(player.wrongAttempts).toEqual(0);
 
-        player.reviewAttempt('game', 'c');
-        player.reviewAttempt('game', 'C');
+        player.attempt('game', 'c');
+        player.attempt('game', 'C');
 
         expect(player.wrongAttempts).toEqual(1);
       });
 
       it("should not add a bad guess  to `this.correct`", () => {
 
-        player.reviewAttempt('game', 'c');
+        player.attempt('game', 'c');
 
         expect(player.correct.length).toEqual(0);
       })
 
       it("should added a correct guess to `this.correct`", () => {
 
-        player.reviewAttempt('game', 'e');
-        player.reviewAttempt('game', 'g');
+        player.attempt('game', 'e');
+        player.attempt('game', 'g');
 
         expect(player.correct).toEqual(['e', 'g']);
       })
 
       it("should end in a win when all letters have been guessed", () => {
 
-        player.reviewAttempt('game', 'a');
-        player.reviewAttempt('game', 'e');
-        player.reviewAttempt('game', 'g');
+        player.attempt('game', 'a');
+        player.attempt('game', 'e');
+        player.attempt('game', 'g');
 
-        expect(player.reviewAttempt('game', 'm')).toEqual(true);
-        expect(player.reviewAttempt('game', 'game')).toEqual(true);
+        expect(player.attempt('game', 'm')).toEqual(true);
+        expect(player.attempt('game', 'game')).toEqual(true);
       })
     });
   });

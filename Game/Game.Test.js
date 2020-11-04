@@ -11,7 +11,7 @@ describe('Game', () => {
 
   describe('Initialization', () => {
     it("should have a word to guess", () => {
-      expect(a.wordToGuess).toEqual('game');
+      expect(a.guessWord).toEqual('game');
     });
 
     it("should have a `maxWrongAttempts` property", () => {
@@ -67,7 +67,7 @@ describe('Game', () => {
 
       });
     });
-
+    
     describe('isOver', () => {
 
       it('should return `true` if everyone has finished, else `false`', () => {
@@ -87,6 +87,46 @@ describe('Game', () => {
       })
     });
 
+    describe('makeGuess', () => {
+
+      it('should let a player make a guess', () => {
+
+        a.addPlayer('one');
+        a.setGuessWord('debug');
+
+        a.makeGuess('one', 'd');
+        expect(a.players['one'].attempts).toEqual(['d']);
+        expect(a.players['one'].correct).toEqual(['d']);
+        expect(a.players['one'].wrongAttempts).toEqual(0);
+      });
+
+      it('should record a player win and reward them bonusPoints', () => {
+        a.addPlayer('one');
+        a.setGuessWord('debug');
+
+        a.makeGuess('one', 'debug');
+        expect(a.players['one'].score).toEqual(115)
+        expect(a.winners).toEqual(['one'])
+        expect(a.finished).toEqual(1)
+
+        a.addPlayer('two');
+        a.makeGuess('two', 'debug');
+        expect(a.players['one'].score).toEqual(115)
+        expect(a.winners).toEqual(['one', 'two'])
+        expect(a.finished).toEqual(2)
+      });
+
+      it('should record when a player loses', () => {
+        a.addPlayer('one');
+        a.setGuessWord('debug');
+        a.players['one'].wrongAttempts = 5;
+
+        a.makeGuess('one', 'debad');
+        expect(a.winners).toEqual([])
+        expect(a.finished).toEqual(1)
+      });
+    });
+
     describe('removePlayer', () => {
 
       it('should delete a player from the `players` Object', () => {
@@ -102,14 +142,14 @@ describe('Game', () => {
     describe('setGuessWord', () => {
 
       it('should set the word to guess', () => {
-        expect(a.wordToGuess).toEqual('game')
+        expect(a.guessWord).toEqual('game')
       });
 
       it('should convert the word toLowerCase', () => {
 
         a.setGuessWord('GaME!')
 
-        expect(a.wordToGuess).toEqual('game!')
+        expect(a.guessWord).toEqual('game!')
       });
     });
 
@@ -148,10 +188,10 @@ describe('Game', () => {
         expect(a.finished).toEqual(0);
         expect(a.generatorID).toEqual('two');
         expect(a.winners).toEqual([])
-        expect(a.wordToGuess).toEqual('');
-        expect(a.players['one']).toEqual( new Player('one') );
-        expect(a.players['two']).toEqual( new Player('two') );
-        expect(a.players['three']).toEqual( new Player('three') );
+        expect(a.guessWord).toEqual('');
+        expect(a.players['one']).toEqual( new Player('one', 6) );
+        expect(a.players['two']).toEqual( new Player('two', 6) );
+        expect(a.players['three']).toEqual( new Player('three', 6) );
 
 
       });

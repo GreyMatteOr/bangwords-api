@@ -45,7 +45,7 @@ class Room {
   }
 
   isGameReady() {
-    return this.getPlayerCount() >= 2 && !this.game.isOver() && this.game.wordToGuess !== '';
+    return this.getPlayerCount() >= 2 && !this.game.isOver() && this.game.guessWord !== '';
   }
 }
 
