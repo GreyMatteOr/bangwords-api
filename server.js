@@ -43,6 +43,7 @@ io.on( "connect", ( socket ) => {
     let room = rooms[roomID];
     room.game.makeGuess(socket.id, guess);
     io.to(socket.id).emit('result', room.getGuessResponse(socket.id))
+    io.emit('result', {scores: room.getScores()})
     if(room.game.isOver()){
       io.in(roomID).emit('result', {isOver: true});
     }
@@ -84,7 +85,7 @@ io.on( "connect", ( socket ) => {
   socket.on( "disconnect", () => {
     leaveRoom(socket);
     delete players[socket.id];
-    io.emit('results', {numOnline: Object.keys(players).length})
+    io.emit('result', {numOnline: Object.keys(players).length})
     console.log(`${socket.id.slice(0, -8)} disconnected.`)
   });
 
@@ -111,12 +112,14 @@ function leaveRoom( socket ) {
   socket.leave(roomID);
   let room = rooms[roomID];
   let changedState = {}
-  room.deletePlayer(socket.id);
-  if (room.getPlayerCount() <= 0) {
-    delete rooms[room.id];
-    io.emit('result', {rooms: Object.keys(rooms)})
-  } else {
-    io.in(room.id).emit('result', {playerNames: Object.values(room.playerNames)})
+  if (room) {
+    room.deletePlayer(socket.id);
+    if (room.getPlayerCount() <= 0) {
+      delete rooms[room.id];
+      io.emit('result', {rooms: Object.keys(rooms)})
+    } else {
+      io.in(room.id).emit('result', {playerNames: Object.values(room.playerNames)})
+    }
   }
 }
 
