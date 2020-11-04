@@ -44,6 +44,7 @@ class Game {
     let didWin = null;
     if (player.hasWon) didWin = true;
     else if (player.getAttemptsLeft() === 0) didWin = false;
+    else if (this.verifyGen( id )) didWin = 'gen';
     return {
       score: player.score,
       attempts: player.getAttemptsLeft(),
