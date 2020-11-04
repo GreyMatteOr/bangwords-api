@@ -5,7 +5,7 @@ const io = require('socket.io')(server);
 const Game = require('./Game/Game.js');
 const Room = require('./Room/Room.js');
 const cors = require('cors');
-let rooms = {}, players = {}, generator;
+let rooms = {}, players = {};
 
 app.use(express.json());
 app.use(cors());
@@ -45,8 +45,17 @@ io.on( "connect", ( socket ) => {
     io.to(socket.id).emit('result', room.getGuessResponse(socket.id))
     io.emit('result', {scores: room.getScores()})
     if(room.game.isOver()){
+      console.log('game OVER')
       io.in(roomID).emit('result', {isOver: true});
+      setTimeout(() => {
+        let nextGenID = room.game.reset();
+        Object.keys(room.playerNames).forEach( id => io.to(id).emit('result', {isGenerator: id === nextGenID, isGameReady: false}))
+      }, 5000)
     }
+  })
+
+  socket.on( 'nextGame', () => {
+
   })
 
   socket.on( 'sendMessage', ( message ) => {

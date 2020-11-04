@@ -86,7 +86,7 @@ class Game {
     this.winners = []
     this.guessWord = '';
     Object.values(this.players).forEach( player => player.reset())
-
+    return this.generatorID;
   }
 }
 
