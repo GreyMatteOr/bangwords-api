@@ -27,15 +27,22 @@ io.on( "connect", ( socket ) => {
 
   socket.on( 'joinRoom', ( id ) => {
     if (rooms[id]) {
-      io.in(id).emit('result', joinRoom(socket, id));
+      io.to(socket.id).emit('result', joinRoom(socket, rooms[id]));
     } else {
-      io.to(socket.id).emit('result', {errorMSG: `Room with name ${id} does not exist.`});
+      io.to(socket.id).emit('result', {errorMSG: `Room with name '${id}' does not exist.`});
     }
   });
 
   socket.on( 'leaveRoom', () => {
     leaveRoom(socket);
     io.to(socket.id).emit('result', {inGame: false, isGenerator: null});
+  })
+
+  socket.on( 'makeGuess', ( guess ) => {
+    let roomID = players[socket.id];
+    let room = rooms[roomID];
+    room.game.makeGuess(socket.id, guess);
+    io.to(socket.id).emit('result', room.getGuessResponse(socket.id))
   })
 
   socket.on( 'sendMessage', ( message ) => {
@@ -53,34 +60,28 @@ io.on( "connect", ( socket ) => {
       room.game.setGenerator(socket.id);
     }
     room.addPlayer(socket.id, userName);
-    io.in(roomID).emit('result', room.getStateData())
+    io.to(socket.id).emit('result', room.getLoadData( socket.id ))
+    socket.to(roomID).emit('result', {
+      hasGenerator: room.game.generatorID !== null,
+      isGameReady: room.isGameReady(),
+      playerNames: Object.values(room.playerNames)
+    })
   })
 
   socket.on( 'setWord', ( word ) => {
     let roomID = players[socket.id];
     let room = rooms[roomID];
-    room.game.reset(socket.id);
     room.game.setGuessWord(word);
-    io.in(roomID).emit('result', room.getStateData())
-  })
-
-  socket.on( 'makeGuess', ( guess ) => {
-    let roomID = players[socket.id];
-    let room = rooms[roomID];
-    room.game.reviewAttempt(guess);
-    io.in(roomID).emit('result', room.getStateData())
-  })
-
-  socket.on( 'forfeit', () => {
-    let roomID = players[socket.id];
-    let room = rooms[roomID];
-    room.game.reset();
-    io.in(roomID).emit('result', room.getStateData());
+    Object.keys(room.playerNames).forEach( socketID => {
+      io.to(socketID).emit('result', room.getStateData( socketID ));
+    });
   })
 
   socket.on( "disconnect", () => {
-    console.log(`${socket.id.slice(0, -8)} disconnected.`)
-    leaveRoom(socket);
+    let newState = leaveRoom(socket);
+    delete players[socket.id];
+    newState.numOnline = Object.keys(players).length;
+    // console.log(`${socket.id.slice(0, -8)} disconnected.`)
   });
 
   io.emit('result', { numOnline: Object.keys(players).length })

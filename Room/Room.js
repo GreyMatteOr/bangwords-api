@@ -21,6 +21,33 @@ class Room {
     return this.playerNames[id];
   }
 
+  getGuessResponse( id ) {
+    let player = this.game.getPlayer( id );
+    let { guessWord } = this.game;
+    return {
+      attempts: player.attempts,
+      attemptsLeft: player.getAttemptsLeft(),
+      display: player.getRevealed(guessWord),
+      isWon: player.checkGameWon(guessWord)
+    }
+  }
+
+  getLoadData( id ) {
+    let player = this.game.getPlayer( id );
+    let { guessWord } = this.game;
+    return {
+      attempts: [],
+      attemptsLeft: player.getAttemptsLeft(),
+      display: player.getRevealed(guessWord),
+      hasGenerator: this.game.generatorID !== null,
+      isGameReady: this.isGameReady(),
+      isOver: this.game.isOver(),
+      isWon: false,
+      playerNames: Object.values(this.playerNames),
+      scores: this.getScores()
+    }
+  }
+
   getStateData( id ) {
     let player = this.game.getPlayer( id );
     let { guessWord } = this.game;
