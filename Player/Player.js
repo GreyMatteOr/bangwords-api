@@ -2,8 +2,8 @@ const symbols = '\ .,!?@#$%^&*()"\':;{}[]\\|<>/';
 
 class Player {
   constructor( id ) {
-    this.attemptedGuesses = [];
-    this.correctGuesses = [];
+    this.attempts = [];
+    this.correct = [];
     this.id = id;
     this.score = 0;
     this.wrongAttempts = 0;
@@ -14,12 +14,12 @@ class Player {
   }
 
   checkGameWon(word) {
-    if (this.correctGuesses.includes(word)) {
+    if (this.correct.includes(word)) {
       return true;
     }
     let chars = word.split('');
     let revealedAll = chars.every(letter => {
-      return this.correctGuesses.includes(letter) || symbols.includes(letter);
+      return this.correct.includes(letter) || symbols.includes(letter);
     });
     if (revealedAll) {
       return true;
@@ -27,12 +27,16 @@ class Player {
     return false;
   }
 
+  getAttemptsLeft( base ) {
+    return base - this.wrongAttempts;
+  }
+
   getRevealed(word, inPoints = false) {
-    let chars = this.word.split('')
+    let chars = word.split('')
     .map(char => {
-      if (this.correctGuesses.includes(letter) ||
-        symbols.includes(letter)) {
-        return letter;
+      if (this.correct.includes(char) ||
+        symbols.includes(char)) {
+        return char;
       }
       return '_';
     });
@@ -42,27 +46,23 @@ class Player {
     return chars;
   }
 
-  getGuessesLeft( base ) {
-    return base - this.wrongAttempts;
-  }
-
   reset() {
-    this.attemptedGuesses = [];
-    this.correctGuesses = [];
-    this.wrongGuesses = 0;
+    this.attempts = [];
+    this.correct = [];
+    this.wrongAttempts = 0;
   }
 
   reviewAttempt(word, guess) {
     guess = guess.toLowerCase();
-    if (this.attemptedGuesses.includes(guess)) {
+    if (this.attempts.includes(guess)) {
       return;
     }
-    this.attemptedGuesses.push(guess);
+    this.attempts.push(guess);
     if (word != guess && !word.includes(guess)) {
-      this.wrongGuesses += 1;
+      this.wrongAttempts += 1;
       return `'${guess}' was a bad guess.`
     } else {
-      this.correctGuesses.push(guess);
+      this.correct.push(guess);
       return this.checkGameWon(word);
     }
   }
