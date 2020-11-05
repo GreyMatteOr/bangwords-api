@@ -49,7 +49,7 @@ io.on( "connect", ( socket ) => {
       io.in(roomID).emit('result', {isOver: true, winners: room.getWinners()});
       setTimeout(() => {
         let nextGenID = room.game.reset();
-        Object.keys(room.playerNames).forEach( id => io.to(id).emit('result', {isGenerator: id === nextGenID, isGameReady: false}))
+        Object.keys(room.playerNames).forEach( id => io.to(id).emit('result', {isGenerator: id === nextGenID, isGameReady: false, hasWord: false}))
       }, 5000)
     }
   })
