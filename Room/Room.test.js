@@ -31,7 +31,7 @@ describe('Room', () => {
         expect(room.playerNames).toEqual({
           'asdf': 'one',
           'qwer': 'two',
-          'zxcv': 'two'
+          'zxcv': 'two1'
         });
 
         expect(room.game.players).toEqual({
@@ -80,11 +80,18 @@ describe('Room', () => {
           attemptsLeft: 5,
           display: ['d','_','_','_','_'],
           hasGenerator: false,
+          hasWord: true,
           isGameReady: false,
-          isOver: false,
+          isOver: true,
           isWon: false,
           playerNames: ['one'],
-          scores: {'one': 0}
+          scores: {
+            'one': {
+            "attempts": 5,
+            "didWin": null,
+            "score": 0,
+            }
+          }
         });
 
         room.addPlayer('qwer', 'two');
@@ -96,11 +103,23 @@ describe('Room', () => {
           attemptsLeft: 5,
           display: ['d','_','_','_','_'],
           hasGenerator: true,
-          isGameReady: true,
-          isOver: false,
+          hasWord: true,
+          isGameReady: false,
+          isOver: true,
           isWon: true,
           playerNames: ['one', 'two'],
-          scores: {'one': 100, 'two': 0}
+          scores: {
+            one: {
+              attempts: 5,
+              didWin: true,
+              score: 100,
+            },
+            two: {
+              attempts: 6,
+              didWin: "gen",
+              score: 0,
+            }
+          }
         });
 
       });
@@ -131,17 +150,57 @@ describe('Room', () => {
       it('should return an object with a userName and a score for each player', () => {
         room.addPlayer('asdf', 'two');
         room.addPlayer('asdf', 'two');
-        expect(room.getScores()).toEqual({'two': 0});
+        expect(room.getScores()).toEqual({
+          "two1": {
+            "attempts": 6,
+            "didWin": null,
+            "score": 0,
+         }
+       });
 
         room.addPlayer('qwer', 'one');
-        expect(room.getScores()).toEqual({'two': 0, 'one': 0});
+        expect(room.getScores()).toEqual(
+          {
+            one: {
+              attempts: 6,
+              didWin: null,
+              score: 0
+            },
+            two1: {
+              attempts: 6,
+              didWin: null,
+              score: 0
+            }
+          }
+        );
 
         room.game.getPlayer( 'asdf' ).score = 154
-        expect(room.getScores()).toEqual({'two': 154, 'one': 0});
+        expect(room.getScores()).toEqual(
+          {
+            one: {
+              attempts: 6,
+              didWin: null,
+              score: 0,
+            },
+            two1: {
+              attempts: 6,
+              didWin: null,
+              score: 154,
+            }
+          }
+        );
 
         room.deletePlayer('asdf');
-        expect(room.getScores()).toEqual({'one': 0});
-      })
+        expect(room.getScores()).toEqual(
+          {
+            one: {
+              attempts: 6,
+              didWin: null,
+              score: 0,
+            }
+          }
+        );
+      });
     });
 
     describe('isGameReady', () => {
@@ -174,7 +233,7 @@ describe('Room', () => {
         room.game.setGuessWord('debug');
         room.game.finished = 2;
 
-        expect(room.isGameReady()).toEqual(false);
+        expect(room.isGameReady()).toEqual(true);
       });
     });
   });
