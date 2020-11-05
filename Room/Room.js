@@ -35,7 +35,8 @@ class Room {
       attempts: player.attempts,
       attemptsLeft: player.getAttemptsLeft(),
       display: player.getRevealed(guessWord),
-      isWon: player.checkGameWon(guessWord)
+      isWon: player.checkGameWon(guessWord),
+      isLost: player.getAttemptsLeft() === 0
     }
   }
 
