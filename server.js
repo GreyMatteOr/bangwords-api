@@ -5,7 +5,7 @@ const io = require('socket.io')(server);
 const Game = require('./Game/Game.js');
 const Room = require('./Room/Room.js');
 const cors = require('cors');
-let rooms = {}, players = {}, generator;
+let rooms = {}, players = {};
 
 app.use(express.json());
 app.use(cors());
@@ -35,7 +35,7 @@ io.on( "connect", ( socket ) => {
 
   socket.on( 'leaveRoom', () => {
     leaveRoom(socket);
-    io.to(socket.id).emit('result', {inGame: false, isGenerator: null});
+    io.to(socket.id).emit('result', {inRoom: false, isGenerator: null});
   })
 
   socket.on( 'makeGuess', ( guess ) => {
@@ -43,6 +43,15 @@ io.on( "connect", ( socket ) => {
     let room = rooms[roomID];
     room.game.makeGuess(socket.id, guess);
     io.to(socket.id).emit('result', room.getGuessResponse(socket.id))
+    io.emit('result', {scores: room.getScores()})
+    if(room.game.isOver()){
+      console.log('game OVER')
+      io.in(roomID).emit('result', {isOver: true, winners: room.getWinners()});
+      setTimeout(() => {
+        let nextGenID = room.game.reset();
+        Object.keys(room.playerNames).forEach( id => io.to(id).emit('result', {isGenerator: id === nextGenID, isGameReady: false}))
+      }, 5000)
+    }
   })
 
   socket.on( 'sendMessage', ( message ) => {
@@ -64,7 +73,8 @@ io.on( "connect", ( socket ) => {
     socket.to(roomID).emit('result', {
       hasGenerator: room.game.generatorID !== null,
       isGameReady: room.isGameReady(),
-      playerNames: Object.values(room.playerNames)
+      playerNames: Object.values(room.playerNames),
+      scores: room.getScores()
     })
   })
 
@@ -78,10 +88,10 @@ io.on( "connect", ( socket ) => {
   })
 
   socket.on( "disconnect", () => {
-    let newState = leaveRoom(socket);
+    leaveRoom(socket);
     delete players[socket.id];
-    newState.numOnline = Object.keys(players).length;
-    // console.log(`${socket.id.slice(0, -8)} disconnected.`)
+    io.emit('result', {numOnline: Object.keys(players).length})
+    console.log(`${socket.id.slice(0, -8)} disconnected.`)
   });
 
   io.emit('result', { numOnline: Object.keys(players).length })
@@ -111,11 +121,11 @@ function leaveRoom( socket ) {
     room.deletePlayer(socket.id);
     if (room.getPlayerCount() <= 0) {
       delete rooms[room.id];
+      io.emit('result', {rooms: Object.keys(rooms)})
     } else {
       io.in(room.id).emit('result', {playerNames: Object.values(room.playerNames)})
     }
   }
-  return {rooms: Object.keys(rooms)};
 }
 
 server.listen(app.get('port'), () => {
