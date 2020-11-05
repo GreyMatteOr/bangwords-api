@@ -46,16 +46,12 @@ io.on( "connect", ( socket ) => {
     io.emit('result', {scores: room.getScores()})
     if(room.game.isOver()){
       console.log('game OVER')
-      io.in(roomID).emit('result', {isOver: true});
+      io.in(roomID).emit('result', {isOver: true, winners: room.getWinners()});
       setTimeout(() => {
         let nextGenID = room.game.reset();
         Object.keys(room.playerNames).forEach( id => io.to(id).emit('result', {isGenerator: id === nextGenID, isGameReady: false}))
       }, 5000)
     }
-  })
-
-  socket.on( 'nextGame', () => {
-
   })
 
   socket.on( 'sendMessage', ( message ) => {

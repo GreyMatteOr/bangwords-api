@@ -56,6 +56,7 @@ class Room {
       attemptsLeft: player.getAttemptsLeft(),
       display: player.getRevealed(guessWord),
       hasGenerator: this.game.generatorID !== null,
+      hasWord: this.game.guessWord !== '',
       isGameReady: this.isGameReady(),
       isOver: this.game.isOver(),
       isWon: player.checkGameWon(guessWord),
@@ -73,6 +74,15 @@ class Room {
       scores[name] = this.game.getPlayerScore( id );
       return scores;
     }, {});
+  }
+
+  getWinners() {
+    let output = this.game.winners.map((id, i) => {
+      let name = this.getPlayerName( id ) || '[--redacted--]';
+      return `${i + 1}.) ${name} +${ 30 - (i * 10) }`
+    });
+    output.push(this.game.guessWord)
+    return output.length > 1 ? output : ['Wow, that was hard. No one won!', this.game.guessWord];
   }
 
   isGameReady() {
