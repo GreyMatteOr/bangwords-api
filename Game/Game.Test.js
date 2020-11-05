@@ -92,16 +92,14 @@ describe('Game', () => {
 
     describe('isOver', () => {
 
-      it('should return `true` if everyone has finished, else `false`', () => {
+      it('should return `true` if everyone but one person has finished, else `false`', () => {
         a.addPlayer('123')
-        expect(a.isOver()).toEqual(false)
+        expect(a.isOver()).toEqual(true)
         a.addPlayer('234')
         expect(a.isOver()).toEqual(false)
         a.addPlayer('345')
         expect(a.isOver()).toEqual(false)
 
-        a.finished++;
-        expect(a.isOver()).toEqual(false)
         a.finished++;
         expect(a.isOver()).toEqual(false)
         a.finished++;

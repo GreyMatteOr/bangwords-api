@@ -73,8 +73,9 @@ describe('server', () => {
         rooms['debug1'] = new Room('debug1');
 
         joinRoom(socket, rooms['debug1']);
+        leaveRoom(socket)
 
-        expect(leaveRoom(socket)).toEqual({rooms: []});
+        expect(rooms).toEqual({});
         expect(players).toEqual({[socket.id]: null});
         expect(joinedRooms).toEqual([]);
         done();
@@ -97,8 +98,9 @@ describe('server', () => {
         joinedRooms = [];
         socket.emit('createRoom', 'debug-room');
         setTimeout(() => {
-          expect(responseCount).toEqual(2);
+          expect(responseCount).toEqual(3);
           expect(result).toEqual([
+            {rooms: []},
             {hasGenerator: false, inRoom: true},
             {rooms:['debug-room']}
           ]);
@@ -167,10 +169,11 @@ describe('server', () => {
         socket.emit('leaveRoom');
 
         setTimeout(() => {
-          expect(responseCount).toEqual(2);
+          expect(responseCount).toEqual(3);
           expect(result).toEqual([
             {inRoom: true, hasGenerator: false},
-            {inGame: false, isGenerator: null}]);
+            { rooms: []},
+            {inRoom: false, isGenerator: null}]);
           expect(joinedRooms).toEqual([]);
           expect(rooms).toEqual({});
           expect(players).toEqual({[socket.id]: null})
@@ -193,7 +196,7 @@ describe('server', () => {
         socket.emit('makeGuess', 'x');
 
         setTimeout(() => {
-          expect(responseCount).toEqual(6);
+          expect(responseCount).toEqual(10);
           expect(result).toEqual([
             {inRoom: true, hasGenerator: false},
             {
@@ -274,9 +277,16 @@ describe('server', () => {
               attempts: [],
               attemptsLeft: 6,
               display: ['_','_','_','_','_','_','_','_','_'],
-              isOver: false,
+              isOver: true,
               isWon: false,
-              scores: {Scott: 0},
+              scores: {
+                Scott: {
+                  attempts: 6,
+                  didWin: "gen",
+                  score: 0,
+                }
+              },
+              userName: "Scott",
               hasGenerator: true,
               isGameReady: false,
               playerNames: ['Scott']
@@ -304,11 +314,18 @@ describe('server', () => {
               attemptsLeft: 6,
               display: ['_','_','_','_','_','_','_','_','_','!'],
               hasGenerator: true,
+              hasWord: true,
               isGameReady: false,
-              isOver: false,
+              isOver: true,
               isWon: false,
               playerNames: ['Scott'],
-              scores: {Scott: 0}
+              scores: {
+                Scott: {
+                  attempts: 6,
+                  didWin: "gen",
+                  score: 0,
+                }
+              }
             }
           ]);
           done();

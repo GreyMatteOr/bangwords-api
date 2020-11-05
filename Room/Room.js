@@ -67,7 +67,8 @@ class Room {
       hasGenerator: this.game.generatorID !== null,
       hasWord: this.game.guessWord !== '',
       isGameReady: this.isGameReady(),
-      isOver: this.game.isOver(),
+      isOver: false,
+      isLost: player.getAttemptsLeft() === 0,
       isWon: player.checkGameWon(guessWord),
       playerNames: Object.values(this.playerNames),
       scores: this.getScores()
