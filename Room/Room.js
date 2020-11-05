@@ -8,6 +8,13 @@ class Room {
   }
 
   addPlayer( id, name ) {
+    if (Object.values(this.playerNames).includes(name)) {
+      let uniqifier = 1;
+      while (Object.values(this.playerNames).includes(name + uniqifier)) {
+        uniqifier++;
+      }
+      name += uniqifier;
+    }
     this.playerNames[id] = name;
     this.game.addPlayer( id );
   }
@@ -44,6 +51,7 @@ class Room {
       isOver: this.game.isOver(),
       isWon: false,
       playerNames: Object.values(this.playerNames),
+      userName: this.getPlayerName(id),
       scores: this.getScores()
     }
   }
