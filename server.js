@@ -121,8 +121,8 @@ function leaveRoom( socket ) {
   let room = rooms[roomID];
   let changedState = {}
   if (room) {
+    let userName = room.getPlayerName( socket.id ) || '[--redacted--]';
     room.deletePlayer(socket.id);
-    let userName = room.getPlayerName( socket.id )
     io.in(roomID).emit('chatMessage', `#Admin#: ${userName} has left the room.`)
     if (room.getPlayerCount() <= 0) {
       delete rooms[room.id];
