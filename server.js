@@ -69,6 +69,7 @@ io.on( "connect", ( socket ) => {
       room.game.setGenerator(socket.id);
     }
     room.addPlayer(socket.id, userName);
+    io.in(roomID).emit('chatMessage', `#Admin#: ${userName} has joined the room!`);
     io.to(socket.id).emit('result', room.getLoadData( socket.id ))
     socket.to(roomID).emit('result', {
       hasGenerator: room.game.generatorID !== null,
@@ -121,6 +122,8 @@ function leaveRoom( socket ) {
   let changedState = {}
   if (room) {
     room.deletePlayer(socket.id);
+    let userName = room.getPlayerName( socket.id )
+    io.in(roomID).emit('chatMessage', `#Admin#: ${userName} has left the room.`)
     if (room.getPlayerCount() <= 0) {
       delete rooms[room.id];
       io.emit('result', {rooms: Object.keys(rooms)})
