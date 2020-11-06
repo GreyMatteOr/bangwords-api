@@ -106,7 +106,9 @@ function joinRoom(socket, room) {
   players[socket.id] = room.id;
   let info = {
     inRoom: true,
-    hasGenerator: room.game.generatorID !== null
+    hasGenerator: room.game.generatorID !== null,
+    isGenerator: null,
+    hasWord: false
   }
   return info;
 }
